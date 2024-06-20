@@ -17,3 +17,12 @@ The final project in TH javascript full-stack.
 13. In main.jsx import reset.css and global.css
 14. Delete everything from app.jsx except hello world
 15. Build out and import the Header.jsx component
+- establish the isSignedOut variable
+- wrap the ul in a jsx ternary to render based on signed in 
+or not state
+- destructured href and username as props
+16. Build out the course component as shown in index.png and index.html
+- utilize an array to hold the course hrefs and titles and pass as destructured props.
+17. Build out a CourseList component that maps over the courses
+18. Build out a MainComponent that imports the CourseList
+19. Export the MainComponent to App.jsx to render the courses
