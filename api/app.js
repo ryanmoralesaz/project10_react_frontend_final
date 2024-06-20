@@ -2,6 +2,8 @@
 
 // load required dependencies
 const express = require('express');
+// load CORS for cross origin sharing with browser
+const cors = require('cors');
 const morgan = require('morgan');
 const { sequelize } = require('./models');
 const usersRouter = require('./routes/users'); // Import the users router
@@ -16,6 +18,15 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 app.use(express.json());
+
+// Configure CORS
+app.use(cors(
+  {
+    origin: 'http://localhost:5171', // The domain of the front end 
+    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+    credentials: true, // allow credentials
+  }
+));
 (async () => {
   try {
     await sequelize.authenticate();
