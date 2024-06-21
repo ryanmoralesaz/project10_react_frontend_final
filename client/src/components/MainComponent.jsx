@@ -1,10 +1,10 @@
 import React from "react";
 import CourseList from "./CourseList";
 
-export default function MainComponent() {
+export default function MainComponent({ children }) {
   return (
     <main>
-      <CourseList />
+      {children}
     </main>
   );
 }

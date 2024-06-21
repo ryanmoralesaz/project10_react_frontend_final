@@ -1,5 +1,6 @@
 import React from "react";
 import Course from "./Course";
+import NewCourse from "./NewCourse";
 
 const courses = [
   { href: "course-detail.html", title: "Build a Basic Bookcase" },
@@ -13,6 +14,7 @@ export default function CourseList() {
       {courses.map((course, index) => (
         <Course href={course.href} courseTitle={course.title} key={index} />
       ))}
+      <NewCourse />
     </div>
   );
 }
