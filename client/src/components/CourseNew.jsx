@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function NewCourse({ href = "create-course.html" }) {
   return (
     <a className="course--module course--add--module" href={href}>

@@ -1,11 +1,14 @@
-import React from "react";
-
 export default function SignUp() {
   return (
     <>
       <form>
         <label forHtml="emailAddress">Email Address</label>
-        <input id="emailAddress" name="emailAddress" type="email" defaultValue="" />
+        <input
+          id="emailAddress"
+          name="emailAddress"
+          type="email"
+          defaultValue=""
+        />
         <label forHtml="password">Password</label>
         <input id="password" name="password" type="password" defaultValue="" />
         <button className="button" type="submit">

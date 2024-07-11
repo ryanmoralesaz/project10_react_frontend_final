@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function SignUp() {
   return (
     <>
@@ -9,7 +7,12 @@ export default function SignUp() {
         <label htmlFor="lastName">Last Name</label>
         <input id="lastName" name="lastName" type="text" defaultValue="" />
         <label htmlFor="emailAddress">Email Address</label>
-        <input id="emailAddress" name="emailAddress" type="email" defaultValue="" />
+        <input
+          id="emailAddress"
+          name="emailAddress"
+          type="email"
+          defaultValue=""
+        />
         <label htmlFor="password">Password</label>
         <input id="password" name="password" type="password" defaultValue="" />
         <button className="button" type="submit">

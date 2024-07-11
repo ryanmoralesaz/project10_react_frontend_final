@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function PageWrapper({ className, title, children }) {
   return (
     <div className={className}>

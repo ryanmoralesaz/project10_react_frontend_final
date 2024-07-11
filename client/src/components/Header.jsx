@@ -1,6 +1,3 @@
-// import react
-import React from "react";
-
 const isSignedIn = true;
 
 export default function Header({ href, Username = "Joe Smith" }) {
@@ -13,7 +10,7 @@ export default function Header({ href, Username = "Joe Smith" }) {
         <nav>
           {isSignedIn ? (
             <ul className="header--signedin">
-                          <li>Welcome, {Username}!</li>
+              <li>Welcome, {Username}!</li>
               <li>
                 <a href="">Sign Out</a>
               </li>

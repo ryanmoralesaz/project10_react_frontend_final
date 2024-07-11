@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function CourseCreate({}) {
   return (
     <>
@@ -14,7 +12,12 @@ export default function CourseCreate({}) {
         <div className="main--flex">
           <div>
             <label forHtml="courseTitle">Course Title</label>
-            <input id="courseTitle" name="courseTitle" type="text" defaultValue="" />
+            <input
+              id="courseTitle"
+              name="courseTitle"
+              type="text"
+              defaultValue=""
+            />
 
             <p>By Joe Smith</p>
 

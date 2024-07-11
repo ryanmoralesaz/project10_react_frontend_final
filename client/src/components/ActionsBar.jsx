@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function ActionsBar({ href }) {
   return (
     <div className="actions--bar">

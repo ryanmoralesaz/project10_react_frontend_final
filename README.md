@@ -26,3 +26,5 @@ or not state
 17. Build out a CourseList component that maps over the courses
 18. Build out a MainComponent that imports the CourseList
 19. Export the MainComponent to App.jsx to render the courses
+20. Added rule to .eslintrc.cjs to ignore proptypes rules
+21. 
