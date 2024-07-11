@@ -18,15 +18,15 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 app.use(express.json());
-
-// Configure CORS
+// configure CORS
 app.use(cors(
   {
-    origin: 'http://localhost:5171', // The domain of the front end 
-    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+    origin: 'http://localhost:5171', // The domain of the front end
+    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE', // the allowed methods
     credentials: true, // allow credentials
   }
 ));
+// IIFE to athenticate the database
 (async () => {
   try {
     await sequelize.authenticate();

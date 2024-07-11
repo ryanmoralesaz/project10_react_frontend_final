@@ -28,18 +28,18 @@ router.get('/users', authenticateUser, async (req, res) => {
 // POST /api/users - create a new user
 router.post('/users', async (req, res) => {
   try {
-    // use destructuring to get the necessary fields from the request body
-    const { firstName, lastName, emailAddress, password } = req.body;
-    // use hashing on the user's password before storing it in the database
-    // utilize the integer 10 for base-10 decimal system
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    // create a new user record in the database with required fields
-    await User.create({
-      firstName,
-      lastName,
-      emailAddress,
-      password: hashedPassword
-    });
+    // destructure the request body specifically looking for the password field, abstract everything else with the rest operator ...
+    const { password, ...rest } = req.body;
+    // cache a user object with the fields and set the confirmed Passworh to the password for temporary development testing
+    const user = {
+      ...rest,
+      password,
+      confirmedPassword: password,
+    }
+    //screate a new user record in the database with the user object
+    await User.create(
+      user
+    );
     // return a entity created status, send a location '/' header and end the route
     res.status(201).location('/').end();
   } catch (error) {

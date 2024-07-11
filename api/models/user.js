@@ -1,5 +1,8 @@
 'use strict';
 const { Model } = require('sequelize');
+// require bcrypt
+const bcrypt = require('bcryptjs');
+
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -18,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init(
     {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
       firstName: {
         type: DataTypes.STRING,
         // firstName is required
@@ -46,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         // email must be unique
         unique: {
-          msg: 'This email address is already associated with another user.'
+          msg: 'This email is already in use in the database.'
         },
         // validation message for empty field and formatted as email
         validate: {
@@ -68,11 +76,48 @@ module.exports = (sequelize, DataTypes) => {
             msg: 'Password is required'
           }
         }
+      },
+      confirmedPassword: {
+        type: DataTypes.VIRTUAL,
+        allowNull: true,
+        // set(val) {
+        //   if (val === this.password) {
+        //     const hashedPassword = bcrypt.hashSync(val, 10);
+        //     this.setDataValue('confirmedPassword', hashedPassword);
+        //   } else {
+        //     throw new Error('Passwords must match');
+        //   }
+
+        // },
+        notNull: {
+          msg: 'Both passwords must match'
+        },
+        validate: {
+          isEqual(value) {
+            if (value !== this.password) {
+              throw new Error('Passwords must match');
+            }
+          }
+        }
       }
+
     },
     {
       sequelize,
-      modelName: 'User'
+      modelName: 'User',
+      hooks: {
+        beforeCreate: async (user) => {
+          // Hash password directly
+          if (user.password) {
+            user.password = await bcrypt.hash(user.password, 10);
+          }
+        },
+        beforeUpdate: async (user) => {
+          if (user.password) {
+            user.password = await bcrypt.hash(user.password, 10);
+          }
+        }
+      }
     }
   );
   return User;

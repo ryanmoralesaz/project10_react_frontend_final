@@ -90,15 +90,23 @@ router.post('/courses', authenticateUser, async (req, res) => {
     // Associate the coures with the authenticated user
     course.userId = req.currentUser.id;
     // asynchronously wait for the course to be created with the sequelize create() method
-    await Course.create(course);
+    // assign it to a new course variable and interpolate it in the response location header
+    const newCourse = await Course.create(course);
     // return a resource created status and a location header of the new resource
-    res.status(201).location(`/api/courses/${course.id}`).end();
+    res.status(201).location(`/api/courses/${newCourse.id}`).end();
   } catch (error) {
-    // send a 400 bad request error to the client with the error message
-    console.error('Error creating the course:', error);
-    res
-      .status(400)
-      .json({ message: 'There was an error creating the course', error });
+    if (error.name === 'SequelizeValidationError') {
+      const errors = error.errors.map((err) => err.message);
+      // send a 400 bad request error to the client with the destructured error message
+      res
+        .status(400)
+        .json({ errors });
+    } else {
+      console.error('Error creating the course:', error);
+      res
+        .status(500)
+        .json({ message: 'There was an error creating the course', error });
+    }
   }
 });
 
