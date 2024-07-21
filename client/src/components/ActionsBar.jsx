@@ -1,16 +1,28 @@
-export default function ActionsBar({ href }) {
+import { Link } from "react-router-dom";
+
+export default function ActionsBar({ courseId }) {
   return (
     <div className="actions--bar">
       <div className="wrap">
-        <a className="button" href="update-course.html">
+        <Link className="button" to={`/courses/${courseId}/update`}>
           Update Course
-        </a>
-        <a className="button" href="#">
+        </Link>
+        <button
+          className="button"
+          onClick={() => {
+            console.log();
+          }}
+        >
           Delete Course
-        </a>
-        <a className="button button-secondary" href="index.html">
+        </button>
+        <button
+          className="button button-secondary"
+          onClick={() => {
+            console.log();
+          }}
+        >
           Return to List
-        </a>
+        </button>
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
+import { Link } from "react-router-dom";
+
 const isSignedIn = true;
 
-export default function Header({ href, Username = "Joe Smith" }) {
+export default function Header({ Username = "Joe Smith" }) {
   return (
     <header>
       <div className="wrap header--flex">
         <h1 className="header--logo">
-          <a href="">Courses</a>
+          <Link to="/">Courses</Link>
         </h1>
         <nav>
           {isSignedIn ? (
