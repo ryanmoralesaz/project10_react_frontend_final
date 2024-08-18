@@ -1,6 +1,8 @@
-export default function NewCourse({ href = "create-course.html" }) {
+import { Link } from "react-router-dom";
+
+export default function NewCourse() {
   return (
-    <a className="course--module course--add--module" href={href}>
+    <Link to="/courses/create" className="course--module course--add--module">
       <span className="course--add--title">
         <svg
           version="1.1"
@@ -14,6 +16,6 @@ export default function NewCourse({ href = "create-course.html" }) {
         </svg>
         New Course
       </span>
-    </a>
+    </Link>
   );
 }

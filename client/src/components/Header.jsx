@@ -1,8 +1,10 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+import UserContext from "../context/UserContext";
 
-const isSignedIn = true;
+export default function Header() {
+  const { authUser, actions } = useContext(UserContext);
 
-export default function Header({ Username = "Joe Smith" }) {
   return (
     <header>
       <div className="wrap header--flex">
@@ -10,20 +12,20 @@ export default function Header({ Username = "Joe Smith" }) {
           <Link to="/">Courses</Link>
         </h1>
         <nav>
-          {isSignedIn ? (
+          {authUser ? (
             <ul className="header--signedin">
-              <li>Welcome, {Username}!</li>
+              <li>Welcome, {authUser.name}!</li>
               <li>
-                <a href="">Sign Out</a>
+                <button onClick={actions.signOut}>Sign Out</button>
               </li>
             </ul>
           ) : (
             <ul className="header--signedout">
               <li>
-                <a href="">Sign Up</a>
+                <Link to="/sign-up">Sign Up</Link>
               </li>
               <li>
-                <a href="">Sign In</a>
+                <Link to="/sign-in">Sign In</Link>
               </li>
             </ul>
           )}
