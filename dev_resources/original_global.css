@@ -4,8 +4,6 @@
 }
 html {
   font-size: 1.25em;
-}
-body {
   font-family: "Work Sans", sans-serif;
 }
 h2 {
@@ -54,7 +52,6 @@ header nav a:hover {
 }
 
 .header--signedin li {
-  display: inline-block;
   text-align: right;
   line-height: 1.25;
 }
@@ -67,10 +64,7 @@ header nav a:hover {
   border-radius: 0.5rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+  display: block;
 }
 .course--label {
   color: #fff;
@@ -82,23 +76,16 @@ header nav a:hover {
   color: #fff;
   font-weight: 700;
   font-size: 1.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .course--add--module {
   background: #ddd9e4;
   color: #57496e;
   font-weight: 300;
   font-size: 1.25rem;
-  align-items: center;
-  justify-content: center;
-  display: flex;
 }
 .course--add--title .add {
-  /* display: inline-block; */
-  height: auto;
   width: 20px;
+  height: auto;
   margin-right: 5px;
   fill: #57496e;
 }
@@ -113,8 +100,6 @@ header nav a:hover {
 }
 .course--name {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
   color: #47395e;
 }
 .course--detail--list {
@@ -219,27 +204,22 @@ textarea:focus {
   outline: 2px solid #332a40;
 }
 
-.main--grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  /* column-gap: 1.5rem; */
-  /* grid-auto-rows: 1fr; */
-  padding: 2rem;
-  gap: 1.5rem;
-}
-@media screen and (max-width: 600px) {
+@media screen and (min-width: 600px) {
   .header--signedin li {
     display: inline-block;
     margin-left: 0.5rem;
     line-height: 1;
   }
   .main--grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5rem;
+    grid-auto-rows: 1fr;
   }
 }
-@media screen and (min-width: 601px) and (max-width: 800px) {
+@media screen and (min-width: 800px) {
   .main--grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr 1fr;
   }
   .main--flex {
     display: flex;
@@ -257,11 +237,5 @@ textarea:focus {
   .button {
     margin: 0 0.5rem 0 0;
     display: inline-block;
-  }
-}
-@media screen and (min-width: 801px) {
-  .main--grid {
-    grid-template-columns: repeat(3, 1fr);
-    /* Three columns for larger screens */
   }
 }

@@ -84,6 +84,8 @@ router.get(`/courses/:id`, async (req, res) => {
 // POST /api/courses
 // create a new course if the user is authenticated
 router.post('/courses', authenticateUser, async (req, res) => {
+  console.log('attempting to create from user, ', req.currentUser);
+  console.log('req.body', req.body);
   try {
     // initialize the body of the request to the course variable
     const course = req.body;
@@ -92,8 +94,15 @@ router.post('/courses', authenticateUser, async (req, res) => {
     // asynchronously wait for the course to be created with the sequelize create() method
     // assign it to a new course variable and interpolate it in the response location header
     const newCourse = await Course.create(course);
+    console.log('new course created', newCourse.toJSON());
+    const locationHeader = `/api/courses/${newCourse.id}`;
     // return a resource created status and a location header of the new resource
-    res.status(201).location(`/api/courses/${newCourse.id}`).end();
+    res.status(201).location(`/api/courses/${newCourse.id}`).end(); console.log('Setting Location header:', locationHeader);
+
+    res.status(201).location(locationHeader).json({
+      message: 'Course created successfully',
+      courseId: newCourse.id
+    });
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       const errors = error.errors.map((err) => err.message);

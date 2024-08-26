@@ -1,0 +1,98 @@
+.main--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* column-gap: 1.5rem; */
+  /* grid-auto-rows: 1fr; */
+  padding: 1rem;
+  gap: 1.5rem;
+}
+
+@media screen and (min-width: 600px) {
+  .header--signedin li {
+    display: inline-block;
+    margin-left: 0.5rem;
+    line-height: 1;
+  }
+  .main--grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media screen and (min-width: 800px) {
+  .main--grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .main--flex {
+    display: flex;
+  }
+}
+
+.course--module {
+  background: #7c689b;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: block;
+  /* flex-direction: column; */
+  /* justify-content: space-between; */
+  height: 100%;
+}
+
+.course--title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.course--add--module {
+  background: #ddd9e4;
+  color: #57496e;
+  font-weight: 300;
+  font-size: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+.course--add--title .add {
+  /* display: inline-block; */
+  height: auto;
+  width: 20px;
+  margin-right: 5px;
+  fill: #57496e;
+}
+
+/* original code */
+@media screen and (min-width: 600px) {
+  .header--signedin li {
+    display: inline-block;
+    margin-left: 0.5rem;
+    line-height: 1;
+  }
+  .main--grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5rem;
+    grid-auto-rows: 1fr;
+  }
+}
+
+@media screen and (min-width: 800px) {
+  .main--grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .main--flex {
+    display: flex;
+  }
+  .main--flex div:first-child {
+    flex-basis: 62%;
+  }
+}
+
+.course--module {
+    background: #7c689b;
+    border-radius: .5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+}

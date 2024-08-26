@@ -6,7 +6,7 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    emailAddress: "",
     password: "",
   });
   const navigate = useNavigate();
@@ -14,23 +14,26 @@ export default function SignUp() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+    console.log(`Field: ${name}, Value: ${value}`);
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await fetch("/api/users", {
+      const response = await fetch("http://localhost:5000/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        await actions.signIn({
-          email: formData.email,
-          password: formData.password,
-        });
+        const user = await response.json();
+        actions.updateAuthUser(user);
+        // await actions.signIn({
+        //   email: formData.emailAddress,
+        //   password: formData.password,
+        // });
         navigate("/");
       } else {
         alert("Failed to sign up");
@@ -66,6 +69,7 @@ export default function SignUp() {
           type="email"
           value={formData.email}
           onChange={handleChange}
+          autoComplete="off"
         />
         <label htmlFor="password">Password</label>
         <input

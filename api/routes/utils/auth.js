@@ -14,10 +14,13 @@ const authenticateUser = async (req, res, next) => {
   // early return for missing credentials
   // if credentials aren't found, return a 401 with an access denied message
   if (!credentials) {
+    console.log("No credentials extracted from authorization header");
     message = 'Authorization header not fonud';
     console.warn(message);
     return res.status(401).json({ message: 'Access Denied' });
   }
+  console.log("Credentials provided for:", credentials.name);
+
   // find the user in the database by the provided email
   const user = await User.findOne({
     where: { emailAddress: credentials.name }
@@ -26,6 +29,8 @@ const authenticateUser = async (req, res, next) => {
   // early return for user not found
   // if the user is not found send a 401 with an access denied message
   if (!user) {
+    console.log("User not found:", credentials.name);
+
     message = 'User not found for username: ' + credentials.name;
     console.warn(message);
     return res.status(401).json({ message: 'Access Denied' });
@@ -36,6 +41,8 @@ const authenticateUser = async (req, res, next) => {
   // early return for failed authentication
   // return 401 message if the authentication failed
   if (!authenticated) {
+    console.log("Authentication failed for:", credentials.name);
+
     message = 'Authentication failure for username: ' + credentials.name;
     console.warn(message);
     return res.status(401).json({ message: 'Access Denied' });

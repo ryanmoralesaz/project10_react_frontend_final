@@ -1,18 +1,20 @@
 import { useState, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import UserContext from "../context/UserContext";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { actions } = useContext(UserContext);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const user = await actions.signIn({ email, password });
     if (user) {
-      navigate("/"); // Redirect to home after sign in
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true }); // Redirect to home after sign in
     } else {
       alert("Sign In Failed");
     }

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import UserContext from "../context/UserContext";
 
 export default function CourseCreate() {
+  const { authUser } = useContext(UserContext);
   const navigate = useNavigate();
   const [course, setCourse] = useState({
     title: "",
@@ -20,23 +22,49 @@ export default function CourseCreate() {
   };
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const response = await fetch("http://localhost:5000/api/courses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(course),
-    });
+    let encodedCreds = btoa(`${authUser.emailAddress}:${authUser.password}`);
+    setErrors([]);
+    try {
+      console.log("Sending course data:", course);
+      console.log("Auth user:", authUser);
+      const response = await fetch("http://localhost:5000/api/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${encodedCreds}`,
+        },
+        body: JSON.stringify(course),
+      });
+      console.log("response ", response.status);
+      if (response.status === 201) {
+        const locationHeader = response.headers.get("Location");
+        console.log("Location header:", locationHeader);
 
-    if (response.ok) {
-      navigate("/");
-    } else {
-      const data = await response.json();
-      setErrors(data.errors || ["An unknown error occurred"]);
+        if (locationHeader) {
+          const newCourseId = locationHeader.split("/").pop();
+          navigate(`/courses/${newCourseId}`);
+        } else {
+          console.log(
+            "Course created successfully, but no location header provided"
+          );
+          // Redirect to the course list or show a success message
+          navigate("/"); // or wherever you want to redirect
+        }
+      } else {
+        const data = await response.json();
+        if (response.status === 400) {
+          setErrors(data.errors || ["Validation failed"]);
+        } else {
+          setErrors([data.errors || "An unknown error occured"]);
+        }
+      }
+    } catch (error) {
+      console.error("error creating course", error);
+      setErrors(["An unknown error occured"]);
     }
   };
   return (
-    <>
+    <div className="form--centered">
       {errors.length > 0 && (
         <div className="validation--errors">
           <h3>Validation Errors</h3>
@@ -53,7 +81,7 @@ export default function CourseCreate() {
             <label htmlFor="courseTitle">Course Title</label>
             <input
               id="courseTitle"
-              name="courseTitle"
+              name="title"
               type="text"
               value={course.title}
               onChange={handleChange}
@@ -62,7 +90,7 @@ export default function CourseCreate() {
             <label htmlFor="courseDescription">Course Description</label>
             <textarea
               id="courseDescription"
-              name="courseDescription"
+              name="description"
               value={course.description}
               onChange={handleChange}
             ></textarea>
@@ -96,6 +124,6 @@ export default function CourseCreate() {
           Cancel
         </button>
       </form>
-    </>
+    </div>
   );
 }

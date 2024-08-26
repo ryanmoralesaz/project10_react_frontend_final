@@ -36,12 +36,20 @@ router.post('/users', async (req, res) => {
       password,
       confirmedPassword: password,
     }
-    //screate a new user record in the database with the user object
+    //create a new user record in the database with the user object
     await User.create(
       user
     );
+    const userResponse = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      emailAddress: user.emailAddress
+    };
     // return a entity created status, send a location '/' header and end the route
-    res.status(201).location('/').end();
+    // res.status(201).location('/').end();
+    // send the userResponse to the signup context action instead of navigating from here
+    res.status(201).json(userResponse);
   } catch (error) {
     // check if any caught errors are validaiton errors or unique constraint errors
     // extra credit problem
@@ -56,5 +64,16 @@ router.post('/users', async (req, res) => {
       res.status(500).json({ message: 'There was an error creating the user' });
     }
   }
+});
+router.post('/users/signin', authenticateUser, (req, res) => {
+  const user = req.currentUser;
+  console.log("Authenticated user:", user ? user.emailAddress : "None");
+
+  res.json({
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    emailAddress: user.emailAddress
+  });
 });
 module.exports = router;
