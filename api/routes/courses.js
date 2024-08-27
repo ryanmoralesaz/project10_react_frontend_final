@@ -84,8 +84,8 @@ router.get(`/courses/:id`, async (req, res) => {
 // POST /api/courses
 // create a new course if the user is authenticated
 router.post('/courses', authenticateUser, async (req, res) => {
-  console.log('attempting to create from user, ', req.currentUser);
-  console.log('req.body', req.body);
+  // console.log('attempting to create from user, ', req.currentUser);
+  // console.log('req.body', req.body);
   try {
     // initialize the body of the request to the course variable
     const course = req.body;
@@ -94,10 +94,10 @@ router.post('/courses', authenticateUser, async (req, res) => {
     // asynchronously wait for the course to be created with the sequelize create() method
     // assign it to a new course variable and interpolate it in the response location header
     const newCourse = await Course.create(course);
-    console.log('new course created', newCourse.toJSON());
+    // console.log('new course created', newCourse.toJSON());
     const locationHeader = `/api/courses/${newCourse.id}`;
     // return a resource created status and a location header of the new resource
-    res.status(201).location(`/api/courses/${newCourse.id}`).end(); console.log('Setting Location header:', locationHeader);
+    // console.log('Setting Location header:', locationHeader);
 
     res.status(201).location(locationHeader).json({
       message: 'Course created successfully',
@@ -175,10 +175,14 @@ router.delete(`/courses/:id`, authenticateUser, async (req, res) => {
           error
         });
     }
+    if (course.userI !== req.currentUser.id) {
+      return res.status(403).json({ message: 'Access denied: User is not the owner' });
+    }
     // if the course owner id matches the id of the authenticated user allow the delete request
     if (course.userId === req.currentUser.id) {
       // delete the course with the sequelize destroy() method
       await course.destroy();
+      console.log('course deleted successfully');
       // return a no content response
       res.status(204).end();
     } else {
