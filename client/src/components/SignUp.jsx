@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import UserContext from "../context/UserContext";
+import ValidationErrors from "./ValidationErrors";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,8 @@ export default function SignUp() {
     emailAddress: "",
     password: "",
   });
+
+  const [errors, setErrors] = useState([]);
   const navigate = useNavigate();
   const { actions } = useContext(UserContext);
 
@@ -20,6 +23,7 @@ export default function SignUp() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setErrors([]);
     try {
       const response = await fetch("http://localhost:5000/api/users", {
         method: "POST",
@@ -35,8 +39,11 @@ export default function SignUp() {
         //   password: formData.password,
         // });
         navigate("/");
+      } else if (response.status === 400) {
+        const data = await response.json();
+        setErrors(data.errors || ["An error occured during sign up."]);
       } else {
-        alert("Failed to sign up");
+        setErrors(["Failed to sign up"]);
       }
     } catch (error) {
       console.error("Error signing up:", error);
@@ -45,6 +52,7 @@ export default function SignUp() {
 
   return (
     <>
+      <ValidationErrors errors={errors} />
       <form onSubmit={handleSubmit}>
         <label htmlFor="firstName">First Name</label>
         <input

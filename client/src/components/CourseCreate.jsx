@@ -1,8 +1,10 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import UserContext from "../context/UserContext";
+import ValidationErrors from "./ValidationErrors";
 
 export default function CourseCreate() {
+  const apiUrl = import.meta.env.VITE_API_URL;
   const { authUser, actions } = useContext(UserContext);
   const navigate = useNavigate();
   const [course, setCourse] = useState({
@@ -27,7 +29,7 @@ export default function CourseCreate() {
     try {
       // console.log("Sending course data:", course);
       // console.log("Auth user:", authUser);
-      const response = await fetch("http://localhost:5000/api/courses", {
+      const response = await fetch(`${apiUrl}/api/courses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,66 +77,69 @@ export default function CourseCreate() {
     }
   };
   return (
-    <div className="form--centered">
-      {errors.length > 0 && (
-        <div className="validation--errors">
-          <h3>Validation Errors</h3>
-          <ul>
-            {errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <form onSubmit={handleSubmit}>
-        <div className="main--flex">
-          <div>
-            <label htmlFor="courseTitle">Course Title</label>
-            <input
-              id="courseTitle"
-              name="title"
-              type="text"
-              value={course.title}
-              onChange={handleChange}
-            />
-
-            <label htmlFor="courseDescription">Course Description</label>
-            <textarea
-              id="courseDescription"
-              name="description"
-              value={course.description}
-              onChange={handleChange}
-            ></textarea>
+    <>
+      <ValidationErrors errors={errors} />
+      <div className="form--centered">
+        {errors.length > 0 && (
+          <div className="validation--errors">
+            <h3>Validation Errors</h3>
+            <ul>
+              {errors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
           </div>
-          <div>
-            <label htmlFor="estimatedTime">Estimated Time</label>
-            <input
-              id="estimatedTime"
-              name="estimatedTime"
-              type="text"
-              value={course.estimatedTime}
-              onChange={handleChange}
-            />
+        )}
+        <form onSubmit={handleSubmit}>
+          <div className="main--flex">
+            <div>
+              <label htmlFor="courseTitle">Course Title</label>
+              <input
+                id="courseTitle"
+                name="title"
+                type="text"
+                value={course.title}
+                onChange={handleChange}
+              />
 
-            <label htmlFor="materialsNeeded">Materials Needed</label>
-            <textarea
-              id="materialsNeeded"
-              name="materialsNeeded"
-              value={course.materialsNeeded}
-              onChange={handleChange}
-            ></textarea>
+              <label htmlFor="courseDescription">Course Description</label>
+              <textarea
+                id="courseDescription"
+                name="description"
+                value={course.description}
+                onChange={handleChange}
+              ></textarea>
+            </div>
+            <div>
+              <label htmlFor="estimatedTime">Estimated Time</label>
+              <input
+                id="estimatedTime"
+                name="estimatedTime"
+                type="text"
+                value={course.estimatedTime}
+                onChange={handleChange}
+              />
+
+              <label htmlFor="materialsNeeded">Materials Needed</label>
+              <textarea
+                id="materialsNeeded"
+                name="materialsNeeded"
+                value={course.materialsNeeded}
+                onChange={handleChange}
+              ></textarea>
+            </div>
           </div>
-        </div>
-        <button className="button" type="submit">
-          Create Course
-        </button>
-        <button
-          className="button button-secondary"
-          onClick={() => navigate("/")}
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
+          <button className="button" type="submit">
+            Create Course
+          </button>
+          <button
+            className="button button-secondary"
+            onClick={() => navigate("/")}
+          >
+            Cancel
+          </button>
+        </form>
+      </div>
+    </>
   );
 }

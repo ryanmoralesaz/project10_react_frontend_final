@@ -93,6 +93,17 @@ export const UserProvider = ({ children }) => {
     },
     [isFetching, lastFetchTime, CACHE_DURATION]
   );
+  const fetchCourse = useCallback(async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/courses/${id}`);
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
+      const data = await response.json();
+      return { success: true, course: data };
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      return { success: false, error: error.message };
+    }
+  }, []);
   const deleteCourse = useCallback(
     async (id) => {
       if (!authUser) return false;
@@ -108,16 +119,65 @@ export const UserProvider = ({ children }) => {
             },
           }
         );
+        console.log("Delete respnose status", response.status);
         if (response.status === 204) {
           setCourses((prevCourses) =>
             prevCourses.filter((course) => course.id !== id)
           );
           return true;
+        } else {
+          const errorData = await response.json();
+          console.error("Delete error", errorData);
+          return false;
         }
-        return false;
       } catch (error) {
         console.error("Error deleting course:", error);
         return false;
+      }
+    },
+    [authUser]
+  );
+  const updateCourse = useCallback(
+    async (id, courseData) => {
+      if (!authUser)
+        return { success: false, errors: ["User not authenticated"] };
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/courses/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Basic ${btoa(
+                `${authUser.emailAddress}:${authUser.password}`
+              )} `,
+            },
+            body: JSON.stringify(courseData),
+          }
+        );
+        if (response.status === 204) {
+          setCourses((prevCourses) => {
+            prevCourses.map((course) =>
+              course.id === id ? { ...course, ...courseData } : course
+            );
+          });
+          return { success: true };
+        } else if (response.status === 400) {
+          const data = await response.json();
+          return { success: false, errors: data.errors };
+        } else if (response.status === 403) {
+          return {
+            success: false,
+            errors: [
+              "Access denied. You don't have permission to update this course.",
+            ],
+          };
+        } else {
+          return { success: false, erros: ["An unknown error occurred"] };
+        }
+      } catch (error) {
+        console.error("error updating course", error);
+        return { success: false, errors: [error.message] };
       }
     },
     [authUser]
@@ -133,9 +193,11 @@ export const UserProvider = ({ children }) => {
         signIn,
         signOut,
         updateAuthUser,
+        fetchCourse,
         fetchCourses,
         deleteCourse,
         addCourse,
+        updateCourse,
       },
     }),
     [
@@ -144,9 +206,11 @@ export const UserProvider = ({ children }) => {
       signIn,
       signOut,
       updateAuthUser,
+      fetchCourse,
       fetchCourses,
       deleteCourse,
       addCourse,
+      updateCourse,
     ]
   );
   return (

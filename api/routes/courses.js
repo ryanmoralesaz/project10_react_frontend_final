@@ -166,6 +166,7 @@ router.delete(`/courses/:id`, authenticateUser, async (req, res) => {
     const course = await Course.findByPk(req.params.id);
     // early return if course not found
     if (!course) {
+      console.log('course not found', req.params.id);
       // return a resource not found status message
       console.error('Error deleting the course: ', error);
       return res
@@ -175,26 +176,26 @@ router.delete(`/courses/:id`, authenticateUser, async (req, res) => {
           error
         });
     }
-    if (course.userI !== req.currentUser.id) {
+    if (course.userId !== req.currentUser.id) {
       return res.status(403).json({ message: 'Access denied: User is not the owner' });
     }
     // if the course owner id matches the id of the authenticated user allow the delete request
-    if (course.userId === req.currentUser.id) {
-      // delete the course with the sequelize destroy() method
-      await course.destroy();
-      console.log('course deleted successfully');
-      // return a no content response
-      res.status(204).end();
-    } else {
-      // return an access denied message for non owner
-      res.status(403).json({
-        message: 'Access denied: User is not the owner of the course.'
-      });
-    }
+    // if (course.userId === req.currentUser.id) {
+    // delete the course with the sequelize destroy() method
+    await course.destroy();
+    console.log('course deleted successfully');
+    // return a no content response
+    res.status(204).end();
+    // } else {
+    // return an access denied message for non owner
+    // res.status(403).json({
+    //     message: 'Access denied: User is not the owner of the course.'
+    //   });
+    // }
   } catch (error) {
     // return a bad request status with an error message
     console.error('There was an error deleting the course', error);
-    res.status(400).json({
+    res.status(500).json({
       message: 'Error deleting the course',
       error
     });

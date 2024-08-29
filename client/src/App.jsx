@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 import Header from "./components/Header";
 import CourseList from "./components/CourseList";
@@ -8,6 +8,9 @@ import CourseUpdate from "./components/CourseUpdate";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import PageWrapper from "./components/PageWrapper";
+import NotFound from "./components/NotFound";
+import Forbidden from "./components/Forbidden";
+import UnhandledError from "./components/UnhandledError";
 // import MainComponent from "./components/MainComponent";
 
 function App() {
@@ -38,6 +41,13 @@ function App() {
             </PageWrapper>
           }
         />
+
+        <Route path="/notFound" element={<NotFound />} />
+
+        <Route path="/forbidden" element={<Forbidden />} />
+
+        <Route path="/error" element={<UnhandledError />} />
+        <Route path="*" element={<Navigate to="/notfound" replace />} />
       </Routes>
     </>
   );
