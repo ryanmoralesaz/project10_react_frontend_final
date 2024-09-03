@@ -2,7 +2,9 @@ import { useState, useCallback, useMemo } from "react";
 import { CourseContext } from "./Context";
 import { useAuth } from "./useContext";
 
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const CourseProvider = ({ children }) => {
+  // console.log("API_BASE_URL:", API_BASE_URL);
   const { authUser } = useAuth();
   const [courses, setCourses] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
@@ -18,9 +20,7 @@ export const CourseProvider = ({ children }) => {
       if (isFetching) return;
       setIsFetching(true);
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/courses?_=${now}`
-        );
+        const response = await fetch(`http://localhost:5000/api/courses?_=${now}`);
 
         if (response.ok) {
           const data = await response.json();
@@ -59,17 +59,14 @@ export const CourseProvider = ({ children }) => {
     async (id) => {
       if (!authUser) return { success: false, error: "User not authenticated" };
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/courses/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Basic ${btoa(
-                `${authUser.emailAddress}:${authUser.password}`
-              )}`,
-            },
-          }
-        );
+        const response = await fetch(`http://localhost:5000/api/courses/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Basic ${btoa(
+              `${authUser.emailAddress}:${authUser.password}`
+            )}`,
+          },
+        });
         if (response.status === 204) {
           setCourses((prevCourses) =>
             prevCourses.filter((course) => course.id !== id)
@@ -100,19 +97,16 @@ export const CourseProvider = ({ children }) => {
       if (!authUser)
         return { success: false, errors: ["User not authenticated"] };
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/courses/${id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(
-                `${authUser.emailAddress}:${authUser.password}`
-              )} `,
-            },
-            body: JSON.stringify(courseData),
-          }
-        );
+        const response = await fetch(`http://localhost:5000/api/courses/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${btoa(
+              `${authUser.emailAddress}:${authUser.password}`
+            )} `,
+          },
+          body: JSON.stringify(courseData),
+        });
         if (response.status === 204) {
           setCourses((prevCourses) => {
             prevCourses.map((course) =>

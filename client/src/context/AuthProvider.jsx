@@ -2,6 +2,8 @@ import { useCallback, useState, useMemo } from "react";
 import { AuthContext } from "./Context";
 import Cookies from "js-cookie";
 
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const AuthProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(() => {
     const cookie = Cookies.get("authenticatedUser");
@@ -31,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     async ({ email, password }) => {
       try {
         const encodedCreds = btoa(`${email}:${password}`);
-        const response = await fetch("http://localhost:5000/api/users/signin", {
+        const response = await fetch(`http://localhost:5000/api/users/signin`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -64,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   const signUp = useCallback(
     async (userData) => {
       try {
-        const response = await fetch("http://localhost:5000/api/users", {
+        const response = await fetch(`http://localhost:5000/api/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userData),
