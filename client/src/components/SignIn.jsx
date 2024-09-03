@@ -1,27 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
-import { useApi } from "../context/useApi";
+import { useAuth } from "../context/useContext";
 
 export default function SignIn() {
-  const { callApi, signIn } = useApi();
+  const { signIn, authUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const [errors, setErrors] = useState([]);
-
+  useEffect(() => {
+    console.log("Current authUser:", authUser);
+  }, [authUser]);
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const user = await callApi(signIn, { email, password });
-    if (user && user.id) {
+    const result = await signIn({ email, password });
+    console.log("Sign in result:", result);
+    if (result.success) {
+      console.log("Sign in successful, user:", result.user);
+
+      console.log(
+        "Sign in successful, navigating to:",
+        location.state?.from?.pathname || "/"
+      );
+
       const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true }); // Redirect to home after sign in
+      try {
+        navigate(from, { replace: true });
+        console.log("Navigation function called");
+      } catch (error) {
+        console.error("Navigation failed:", error);
+      }
     } else {
-      setErrors([
-        "Sign in failed. Please check your credentials and try again.",
-      ]);
+      console.error("Sign in failed:", result.errors);
+      setErrors(result.errors);
     }
   };
 

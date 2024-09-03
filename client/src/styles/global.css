@@ -71,6 +71,9 @@ header nav a:hover {
 ul {
   list-style-position: inside;
 }
+ul > li {
+  padding-right: 0.25rem;
+}
 .header--signedin li {
   display: inline-block;
   text-align: right;
@@ -103,10 +106,12 @@ ul {
   hyphens: auto;
   color: #fff;
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1;
+  padding-bottom: 0.1em;
 }
 .course--add--module {
   background: #ddd9e4;

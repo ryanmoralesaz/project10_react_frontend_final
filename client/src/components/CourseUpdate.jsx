@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useApi } from "../context/useApi";
+import { useCourse, useAuth } from "../context/useContext";
 import ValidationErrors from "./ValidationErrors";
 
 export default function CourseUpdate() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { callApi, fetchCourse, updateCourse, fetchCourses } = useApi();
+  const { actions } = useCourse();
+  const { authUser } = useAuth();
   const [course, setCourse] = useState({
     title: "",
     description: "",
@@ -14,22 +15,33 @@ export default function CourseUpdate() {
     materialsNeeded: "",
   });
   const [errors, setErrors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadCourse = async () => {
-      const result = await callApi(fetchCourse, id);
+  const loadCourse = useCallback(async () => {
+    try {
+      const result = await actions.fetchCourse(id);
       if (result.success) {
         setCourse(result.course);
-      } else if (result.error === "Course not found") {
-        navigate("/notfound");
-      } else if (result.error === "Access denied") {
-        navigate("/forbidden");
       } else {
-        setErrors([result.error]);
+        if (result.error === "Course not found") {
+          navigate("/notfound");
+        } else if (result.error === "Access denied") {
+          navigate("/forbidden");
+        } else {
+          setErrors([result.error]);
+        }
       }
-    };
+    } catch (error) {
+      console.error("Error loading course:", error);
+      setErrors(["An unexpected error occurred"]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, actions, navigate]);
+
+  useEffect(() => {
     loadCourse();
-  }, [id, callApi, fetchCourse, navigate]);
+  }, [loadCourse]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -41,9 +53,9 @@ export default function CourseUpdate() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = await callApi(updateCourse, id, course);
+    const result = await actions.updateCourse(id, course);
     if (result.success) {
-      await callApi(fetchCourses, true);
+      await actions.fetchCourses(true);
       navigate(`/courses/${id}`);
     } else if (errors.includes("Access denied")) {
       navigate("/forbidden");
@@ -53,6 +65,8 @@ export default function CourseUpdate() {
       setErrors(errors);
     }
   };
+  if (isLoading) return <p>Loading...</p>;
+  if (!authUser) return <p>Please sign in to update courses.</p>;
   return (
     <>
       <h2>Update Course</h2>

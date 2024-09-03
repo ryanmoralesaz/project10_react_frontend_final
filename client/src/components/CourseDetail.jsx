@@ -1,9 +1,9 @@
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import ActionsBar from "./ActionsBar";
 import ValidationErrors from "./ValidationErrors";
-import { useApi } from "../context/useApi.js";
+import { useCourse, useAuth } from "../context/useContext";
 
 export default function CourseDetail() {
   // const apiUrl = import.meta.env.VITE_API_URL;
@@ -12,41 +12,51 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { actions } = useCourse();
+  const { authUser } = useAuth();
   const navigate = useNavigate();
-  const { callApi, fetchCourse, deleteCourse, fetchCourses, authUser } =
-    useApi();
-  useEffect(() => {
-    const loadCourse = async () => {
-      const result = await callApi(fetchCourse, id);
+
+  const loadCourse = useCallback(async () => {
+    try {
+      const result = await actions.fetchCourse(id);
       console.log("detail result", result);
       if (result) {
         if (result.success) {
           setCourse(result.course);
         } else {
           setError(result.error);
-          if (result.error === "Course not found") {
-            navigate("/notfound");
-          } else if (result.error === "Access denied") {
-            navigate("/forbidden");
-          }
         }
       }
+    } catch (error) {
+      console.error("Error loading course:", error);
+      setError("An unexpected error occurred");
+    } finally {
       setLoading(false);
-    };
+    }
+  }, [id, actions]);
+
+  useEffect(() => {
     loadCourse();
-  }, [id, fetchCourse, callApi, navigate]);
+  }, [loadCourse]);
+
+  useEffect(() => {
+    if (error === "Course not found") {
+      navigate("/notfound");
+    } else if (error === "Access denied") {
+      navigate("/forbidden");
+    }
+  }, [error, navigate]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const result = await callApi(() => deleteCourse(id));
+      const result = await actions.deleteCourse(id);
       if (result.success) {
-        console.log("course deleted successfully");
-        await callApi(() => fetchCourses(true));
-        navigate("/");
+        await actions.fetchCourses(true);
+        navigate("/", { replace: true });
       } else {
-        console.error("failed to delete course");
-        setError("Failed to delete course");
+        console.error("Failed to delete course:", result.error);
+        setError(result.error || "Failed to delete course");
       }
     } catch (error) {
       console.error("Error in handleDelete:", error);

@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Course from "./Course";
 import NewCourse from "./CourseNew";
-import { useApi } from "../context/useApi";
+import { useApi, useCourse } from "../context/useContext";
+
 // import TestButtons from "./TestButtons";
 
 export default function CourseList() {
-  const { callApi, fetchCourses, courses } = useApi();
+  const { callApi } = useApi();
+  const { courses, actions } = useCourse();
   // utilize useState hook for the courses array
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     const loadCourses = async () => {
       setIsLoading(true);
       try {
-        await callApi(fetchCourses);
+        await callApi(actions.fetchCourses);
       } catch (error) {
         console.error("error fetching courses", error);
       } finally {
@@ -21,7 +23,7 @@ export default function CourseList() {
       }
     };
     loadCourses();
-  }, [callApi, fetchCourses]);
+  }, [callApi, actions.fetchCourses]);
   if (isLoading) {
     return <div>Loading courses...</div>;
   }

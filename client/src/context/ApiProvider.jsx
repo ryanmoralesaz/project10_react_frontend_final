@@ -1,11 +1,9 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import ApiContext from "./ApiContext";
-import { useUser } from "./useUser";
+import { ApiContext } from "./Context";
 
 export const ApiProvider = ({ children }) => {
   const navigate = useNavigate();
-  const { actions, courses, authUser } = useUser();
 
   const callApi = useCallback(
     async (apiFunction, ...args) => {
@@ -21,6 +19,11 @@ export const ApiProvider = ({ children }) => {
         return result;
       } catch (error) {
         console.error("API call failed:", error);
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
         navigate("/error");
         return null;
       }
@@ -30,9 +33,6 @@ export const ApiProvider = ({ children }) => {
 
   const apiValue = {
     callApi,
-    ...actions,
-    courses,
-    authUser
   };
 
   return <ApiContext.Provider value={apiValue}>{children}</ApiContext.Provider>;

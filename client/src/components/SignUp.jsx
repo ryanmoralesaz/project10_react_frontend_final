@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
-import { useApi } from "../context/useApi";
+import { useAuth } from "../context/useContext";
 
 export default function SignUp() {
-  const { callApi, signUp } = useApi();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -24,11 +24,11 @@ export default function SignUp() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const result = await callApi(signUp, formData);
-    if (result.errors) {
-      setErrors(result.errors);
-    } else {
+    const result = await signUp(formData);
+    if (result.success) {
       navigate("/");
+    } else {
+      setErrors(result.errors);
     }
   };
 

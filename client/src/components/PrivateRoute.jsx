@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useApi } from "../context/useApi";
+import { useAuth } from "../context/useContext";
 const PrivateRoute = () => {
-  const { authUser } = useApi();
+  const { authUser } = useAuth();
   const location = useLocation();
   if (!authUser) {
     // save the current location the user was trying to navigate to

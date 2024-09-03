@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useApi } from "../context/useApi";
+import { useAuth } from "../context/useContext";
 
 export default function Header() {
-  const { authUser, signOut } = useApi();
+  const { authUser, signOut } = useAuth();
 
   return (
     <header>

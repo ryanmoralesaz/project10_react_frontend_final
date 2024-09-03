@@ -1,95 +1,11 @@
 import { useState, useCallback, useMemo } from "react";
-import Cookies from "js-cookie";
-import UserContext from "./UserContext";
+import { CourseContext } from "./Context";
+import { useAuth } from "./useContext";
 
-export const UserProvider = ({ children }) => {
-  const cookie = Cookies.get("authenticatedUser");
-  const [authUser, setAuthUser] = useState(cookie ? JSON.parse(cookie) : null);
+export const CourseProvider = ({ children }) => {
+  const { authUser } = useAuth();
   const [courses, setCourses] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
-
-  const updateAuthUser = useCallback((user) => {
-    if (user) {
-      const authUser = {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        emailAddress: user.emailAddress,
-        password: user.password,
-      };
-      setAuthUser(authUser);
-      Cookies.set("authenticatedUser", JSON.stringify(authUser), {
-        expires: 1,
-      });
-    } else {
-      setAuthUser(null);
-      Cookies.remove("authenticatedUser");
-    }
-  }, []);
-
-  const signIn = useCallback(
-    async (credentials) => {
-      const encodedCreds = btoa(`${credentials.email}:${credentials.password}`);
-      const response = await fetch("http://localhost:5000/api/users/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${encodedCreds}`,
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        updateAuthUser({ ...user, password: credentials.password });
-        return user;
-      } else if (response.status === 401) {
-        return {
-          errors: ["User does not exist or credentials are incorrect."],
-        };
-      } else {
-        return {
-          errors: ["Failed to authenticate"],
-        };
-      }
-    },
-    [updateAuthUser]
-  );
-
-  const signUp = useCallback(
-    async (userData) => {
-      try {
-        const response = await fetch("http://localhost:5000/api/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        });
-
-        if (response.ok) {
-          return await signIn({
-            email: userData.emailAddress,
-            password: userData.password,
-          });
-        } else if (response.status === 400) {
-          const data = await response.json();
-          return {
-            errors: data.errors || ["An error occurred during sign up."],
-          };
-        } else {
-          return { errors: ["Failed to sign up"] };
-        }
-      } catch (error) {
-        console.error("Error signing up:", error);
-        return { errors: ["An unexpected error occurred"] };
-      }
-    },
-    [signIn]
-  );
-
-  const signOut = useCallback(() => {
-    updateAuthUser(null);
-  }, [updateAuthUser]);
-
   const [lastFetchTime, setLastFetchTime] = useState(null);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
   const fetchCourses = useCallback(
@@ -243,11 +159,24 @@ export const UserProvider = ({ children }) => {
         });
         if (response.status === 201) {
           const locationHeader = response.headers.get("Location");
-          if (locationHeader) {
-            const newCourseId = locationHeader.split("/").pop();
-            return { success: true, errors: newCourseId };
+          const newCourseId = locationHeader
+            ? locationHeader.split("/").pop()
+            : null;
+
+          const courseDetailsResponse = await fetch(
+            `http://localhost:5000/api/courses/${newCourseId}`,
+            {
+              headers: { Authorization: `Basic ${encodedCreds}` },
+            }
+          );
+
+          if (courseDetailsResponse.ok) {
+            const courseDetails = await courseDetailsResponse.json();
+            setCourses((prevCourses) => [...prevCourses, courseDetails]);
+            return { success: true, courseId: newCourseId };
           } else {
-            return { success: true };
+            console.warn("Course created but details couldn't be fetched");
+            return { success: true, courseId: newCourseId };
           }
         } else if (response.status === 400) {
           const data = await response.json();
@@ -264,10 +193,8 @@ export const UserProvider = ({ children }) => {
           errors: [error.message],
         };
       }
-
-      // setCourses((prevCourses) => [...prevCourses, newCourse]);
     },
-    [authUser]
+    [authUser, setCourses]
   );
 
   const handleErrors = (response) => {
@@ -284,13 +211,8 @@ export const UserProvider = ({ children }) => {
   };
   const contextValue = useMemo(
     () => ({
-      authUser,
       courses,
       actions: {
-        signIn,
-        signUp,
-        signOut,
-        updateAuthUser,
         fetchCourse,
         fetchCourses,
         deleteCourse,
@@ -298,21 +220,11 @@ export const UserProvider = ({ children }) => {
         updateCourse,
       },
     }),
-    [
-      authUser,
-      courses,
-      signIn,
-      signUp,
-      signOut,
-      updateAuthUser,
-      fetchCourse,
-      fetchCourses,
-      deleteCourse,
-      addCourse,
-      updateCourse,
-    ]
+    [courses, fetchCourse, fetchCourses, deleteCourse, addCourse, updateCourse]
   );
   return (
-    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+    <CourseContext.Provider value={contextValue}>
+      {children}
+    </CourseContext.Provider>
   );
 };

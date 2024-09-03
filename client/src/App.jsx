@@ -10,13 +10,15 @@ import SignUp from "./components/SignUp";
 import ErrorNotFound from "./components/ErrorNotFound";
 import ErrorForbidden from "./components/ErrorForbidden";
 import ErrorUnhandled from "./components/ErrorUnhandled";
-
+import NavigateTest from "./components/NavigateTest";
 function App() {
   return (
     <>
       <Header />
       <Routes>
         <Route path="/" element={<CourseList />} />
+        <Route path="/nav-test" element={<NavigateTest />} />
+
         <Route element={<PrivateRoute />}>
           <Route path="/courses/create" element={<CourseCreate />} />
           <Route path="/courses/:id/update" element={<CourseUpdate />} />
