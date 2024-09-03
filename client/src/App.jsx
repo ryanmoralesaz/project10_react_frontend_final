@@ -3,13 +3,13 @@ import PrivateRoute from "./components/PrivateRoute";
 import Header from "./components/Header";
 import CourseList from "./components/CourseList";
 import CourseDetail from "./components/CourseDetail";
-import CourseCreate from "./components/CourseCreate";
-import CourseUpdate from "./components/CourseUpdate";
+import CreateCourse from "./components/CreateCourse";
+import UpdateCourse from "./components/UpdateCourse";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
-import ErrorNotFound from "./components/ErrorNotFound";
-import ErrorForbidden from "./components/ErrorForbidden";
-import ErrorUnhandled from "./components/ErrorUnhandled";
+import NotFound from "./components/NotFound";
+import Forbidden from "./components/Forbidden";
+import UnhandledError from "./components/UnhandledError";
 import NavigateTest from "./components/NavigateTest";
 function App() {
   return (
@@ -20,18 +20,18 @@ function App() {
         <Route path="/nav-test" element={<NavigateTest />} />
 
         <Route element={<PrivateRoute />}>
-          <Route path="/courses/create" element={<CourseCreate />} />
-          <Route path="/courses/:id/update" element={<CourseUpdate />} />
+          <Route path="/courses/create" element={<CreateCourse />} />
+          <Route path="/courses/:id/update" element={<UpdateCourse />} />
         </Route>
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
 
-        <Route path="/notFound" element={<ErrorNotFound />} />
+        <Route path="/notfound" element={<NotFound />} />
 
-        <Route path="/forbidden" element={<ErrorForbidden />} />
+        <Route path="/forbidden" element={<Forbidden />} />
 
-        <Route path="/error" element={<ErrorUnhandled />} />
+        <Route path="/error" element={<UnhandledError />} />
         <Route path="*" element={<Navigate to="/notfound" replace />} />
       </Routes>
     </>

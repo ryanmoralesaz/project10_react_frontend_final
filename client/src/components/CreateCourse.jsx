@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
 import { useCourse, useAuth } from "../context/useContext";
 
-export default function CourseCreate() {
+export default function CreateCourse() {
   // const apiUrl = import.meta.env.VITE_API_URL;
   const { authUser } = useAuth();
   const { actions } = useCourse();

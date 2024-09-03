@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCourse, useAuth } from "../context/useContext";
 import ValidationErrors from "./ValidationErrors";
 
-export default function CourseUpdate() {
+export default function UpdateCourse() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { actions } = useCourse();
@@ -20,8 +20,15 @@ export default function CourseUpdate() {
   const loadCourse = useCallback(async () => {
     try {
       const result = await actions.fetchCourse(id);
+      if (result.status === 500) {
+        navigate("/error");
+        return;
+      }
       if (result.success) {
         setCourse(result.course);
+        if (authUser && authUser.id !== result.course.userId) {
+          navigate("/forbidden");
+        }
       } else {
         if (result.error === "Course not found") {
           navigate("/notfound");
@@ -37,7 +44,7 @@ export default function CourseUpdate() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, actions, navigate]);
+  }, [authUser, id, actions, navigate]);
 
   useEffect(() => {
     loadCourse();
@@ -53,16 +60,23 @@ export default function CourseUpdate() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = await actions.updateCourse(id, course);
-    if (result.success) {
-      await actions.fetchCourses(true);
-      navigate(`/courses/${id}`);
-    } else if (errors.includes("Access denied")) {
-      navigate("/forbidden");
-    } else if (errors.includes("Internal Server Error")) {
+    try {
+      const result = await actions.updateCourse(id, course);
+      if (result.success) {
+        await actions.fetchCourses(true);
+        navigate(`/courses/${id}`);
+      } else if (Array.isArray(result.errors)) {
+        setErrors(result.errors);
+      } else if (result.error === "Access denied") {
+        navigate("/forbidden");
+      } else {
+        setErrors([
+          result.error || "An error occured while udpating the course",
+        ]);
+      }
+    } catch (error) {
+      console.error("Error updating course:", error);
       navigate("/error");
-    } else {
-      setErrors(errors);
     }
   };
   if (isLoading) return <p>Loading...</p>;
