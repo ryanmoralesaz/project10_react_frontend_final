@@ -7,17 +7,14 @@ import CourseCreate from "./components/CourseCreate";
 import CourseUpdate from "./components/CourseUpdate";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
-import PageWrapper from "./components/PageWrapper";
-import NotFound from "./components/NotFound";
-import Forbidden from "./components/Forbidden";
-import UnhandledError from "./components/UnhandledError";
-// import MainComponent from "./components/MainComponent";
+import ErrorNotFound from "./components/ErrorNotFound";
+import ErrorForbidden from "./components/ErrorForbidden";
+import ErrorUnhandled from "./components/ErrorUnhandled";
 
 function App() {
   return (
     <>
       <Header />
-      {/* <MainComponent /> */}
       <Routes>
         <Route path="/" element={<CourseList />} />
         <Route element={<PrivateRoute />}>
@@ -25,28 +22,14 @@ function App() {
           <Route path="/courses/:id/update" element={<CourseUpdate />} />
         </Route>
         <Route path="/courses/:id" element={<CourseDetail />} />
-        <Route
-          path="/sign-in"
-          element={
-            <PageWrapper className="form--centered" title="Sign In">
-              <SignIn />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="/sign-up"
-          element={
-            <PageWrapper className="form--centered" title="Sign Up">
-              <SignUp />
-            </PageWrapper>
-          }
-        />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-up" element={<SignUp />} />
 
-        <Route path="/notFound" element={<NotFound />} />
+        <Route path="/notFound" element={<ErrorNotFound />} />
 
-        <Route path="/forbidden" element={<Forbidden />} />
+        <Route path="/forbidden" element={<ErrorForbidden />} />
 
-        <Route path="/error" element={<UnhandledError />} />
+        <Route path="/error" element={<ErrorUnhandled />} />
         <Route path="*" element={<Navigate to="/notfound" replace />} />
       </Routes>
     </>

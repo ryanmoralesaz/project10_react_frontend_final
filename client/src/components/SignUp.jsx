@@ -24,34 +24,16 @@ export default function SignUp() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    try {
-      const response = await fetch("http://localhost:5000/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        actions.updateAuthUser(user);
-        // await actions.signIn({
-        //   email: formData.emailAddress,
-        //   password: formData.password,
-        // });
-        navigate("/");
-      } else if (response.status === 400) {
-        const data = await response.json();
-        setErrors(data.errors || ["An error occured during sign up."]);
-      } else {
-        setErrors(["Failed to sign up"]);
-      }
-    } catch (error) {
-      console.error("Error signing up:", error);
+    const result = await actions.signUp(formData);
+    if (result.errors) {
+      setErrors(result.errors);
+    } else {
+      navigate("/");
     }
   };
 
   return (
-    <>
+    <div className="form--centered authorize">
       <ValidationErrors errors={errors} />
       <form onSubmit={handleSubmit}>
         <label htmlFor="firstName">First Name</label>
@@ -101,6 +83,6 @@ export default function SignUp() {
       <p>
         Already have a user account? <Link to="/sign-in">Sign in</Link>!
       </p>
-    </>
+    </div>
   );
 }

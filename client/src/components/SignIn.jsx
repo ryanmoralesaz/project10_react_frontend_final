@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import UserContext from "../context/UserContext";
+import ValidationErrors from "./ValidationErrors";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -8,20 +9,26 @@ export default function SignIn() {
   const navigate = useNavigate();
   const location = useLocation();
   const { actions } = useContext(UserContext);
+  const [errors, setErrors] = useState([]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setErrors([]);
     const user = await actions.signIn({ email, password });
-    if (user) {
+    if (user && user.id) {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true }); // Redirect to home after sign in
     } else {
-      alert("Sign In Failed");
+      setErrors([
+        "Sign in failed. Please check your credentials and try again.",
+      ]);
     }
   };
 
   return (
-    <>
+    <div className="form--centered authorize">
+      <h2>Sign In</h2>
+      <ValidationErrors errors={errors} />
       <form onSubmit={handleSubmit}>
         <label htmlFor="emailAddress">Email Address</label>
         <input
@@ -53,6 +60,6 @@ export default function SignIn() {
         Don&apos;t have a user account? Click here to{" "}
         <Link to="/sign-up">sign up</Link>!
       </p>
-    </>
+    </div>
   );
 }

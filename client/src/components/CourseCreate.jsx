@@ -4,7 +4,7 @@ import UserContext from "../context/UserContext";
 import ValidationErrors from "./ValidationErrors";
 
 export default function CourseCreate() {
-  const apiUrl = import.meta.env.VITE_API_URL;
+  // const apiUrl = import.meta.env.VITE_API_URL;
   const { authUser, actions } = useContext(UserContext);
   const navigate = useNavigate();
   const [course, setCourse] = useState({
@@ -22,74 +22,40 @@ export default function CourseCreate() {
       [name]: value,
     }));
   };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    let encodedCreds = btoa(`${authUser.emailAddress}:${authUser.password}`);
     setErrors([]);
     try {
-      // console.log("Sending course data:", course);
-      // console.log("Auth user:", authUser);
-      const response = await fetch(`${apiUrl}/api/courses`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${encodedCreds}`,
-        },
-        body: JSON.stringify(course),
-      });
-      // console.log("response ", response.status);
-      if (response.status === 201) {
-        const locationHeader = response.headers.get("Location");
-        if (locationHeader) {
-          const newCourseId = locationHeader.split("/").pop();
-          await actions.fetchCourses(true);
-
-          navigate(`/courses/${newCourseId}`);
-          // try {
-          //   const newCourse = await response.json();
-          //   actions.addCourse(newCourse);
-          // } catch (error) {
-          //   console.error("Error parsing response:", error);
-          // }
+      const courseData = {
+        ...course,
+        userId: authUser.id,
+      };
+      const result = await actions.addCourse(courseData);
+      if (result.success) {
+        await actions.fetchCourses(true);
+        if (result.courseId) {
+          navigate(`/courses/${result.courseId}`);
         } else {
-          console.log(
-            "Course created successfully, but no location header provided"
-          );
-          await actions.fetchCourses(true);
           navigate("/");
         }
       } else {
-        try {
-          const data = await response.json();
-          if (response.status === 400) {
-            setErrors(data.errors || ["Validation failed"]);
-          } else {
-            setErrors([data.errors || "An unknown error occured"]);
-          }
-        } catch (error) {
-          console.error("Error parsing error response:", error);
-          setErrors(["An unknown error occurred"]);
+        if (result.errors.includes("Internal Server Error")) {
+          navigate("/error");
+        } else {
+          setErrors(result.errors || ["An unknown error occured"]);
         }
       }
     } catch (error) {
-      console.error("error creating course", error);
-      setErrors(["An unknown error occured"]);
+      setErrors([error.message || "An unknown error occured"]);
     }
   };
+
   return (
     <>
+      <h2>Create Course</h2>
       <ValidationErrors errors={errors} />
-      <div className="form--centered">
-        {errors.length > 0 && (
-          <div className="validation--errors">
-            <h3>Validation Errors</h3>
-            <ul>
-              {errors.map((error, index) => (
-                <li key={index}>{error}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+      <div className="form--centered course--modify">
         <form onSubmit={handleSubmit}>
           <div className="main--flex">
             <div>
@@ -129,15 +95,17 @@ export default function CourseCreate() {
               ></textarea>
             </div>
           </div>
-          <button className="button" type="submit">
-            Create Course
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={() => navigate("/")}
-          >
-            Cancel
-          </button>
+          <div className="button-row">
+            <button className="button" type="submit">
+              Create Course
+            </button>
+            <button
+              className="button button-secondary"
+              onClick={() => navigate("/")}
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
     </>

@@ -1,54 +1,45 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import Error from "./Error";
 import ActionsBar from "./ActionsBar";
-import UserContext from "../context/UserContext";
+import ValidationErrors from "./ValidationErrors";
+import { useApi } from "../context/useApi.js";
 
 export default function CourseDetail() {
-  const apiUrl = import.meta.env.VITE_API_URL;
+  // const apiUrl = import.meta.env.VITE_API_URL;
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { authUser, actions } = useContext(UserContext);
   const navigate = useNavigate();
-
+  const { callApi, fetchCourse, deleteCourse, fetchCourses, authUser } =
+    useApi();
   useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/courses/${id}`);
-        if (!response) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    const loadCourse = async () => {
+      const result = await callApi(fetchCourse, id);
+      console.log("detail result", result);
+      if (result) {
+        if (result.success) {
+          setCourse(result.course);
+        } else {
+          setError(result.error);
+          if (result.error === "Course not found") {
+            navigate("/notfound");
+          } else if (result.error === "Access denied") {
+            navigate("/forbidden");
+          }
         }
-        if (response.status === 404) {
-          navigate("/notfound");
-          return;
-        }
-        if (!response.ok) {
-          throw new Error(`HTTP error status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("fetched data", data);
-        setCourse(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Failed to fetch course", error);
-        setError(error.message);
-        if (error.message.includes("500")) {
-          navigate("/error");
-        }
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
-    fetchCourse();
-  }, [id, navigate, apiUrl]);
+    loadCourse();
+  }, [id, fetchCourse, callApi, navigate]);
+
   const handleDelete = async () => {
-    const success = await actions.deleteCourse(id);
-    if (success) {
+    const result = await callApi(() => deleteCourse(id));
+    if (result && result.success) {
       console.log("course deleted successfully");
-      await actions.fetchCourses(true);
+      await callApi(() => fetchCourses(true));
       navigate("/");
     } else {
       console.error("failed to delete course");
@@ -56,7 +47,7 @@ export default function CourseDetail() {
     }
   };
   if (loading) return <p>Loading...</p>;
-  if (error) return <Error errorMessage={error} />;
+  if (error) return <ValidationErrors errors={[error]} />;
   if (!course) return null;
   return (
     <>
@@ -66,7 +57,8 @@ export default function CourseDetail() {
         onDelete={handleDelete}
         isOwner={authUser && authUser.id === course.User.id}
       />
-      <form>
+      <h2>Course Detail</h2>
+      <form className="course--detail">
         <div className="main--flex">
           <div>
             <h3 className="course--detail--title">Course</h3>

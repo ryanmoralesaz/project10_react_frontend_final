@@ -46,7 +46,16 @@ app.get('/', (req, res) => {
 
 app.use('/api', usersRouter); // Use the routers for the /api path
 app.use('/api', coursesRouter); // Use the courses router
-
+app.get('/api/test-forbidden', (req, res) => {
+  res.status(403).json({
+    message: 'Forbidden'
+  });
+});
+app.get('/api/test-error', (req, res) => {
+  res.status(500).json({
+    message: 'Internal Server Error'
+  });
+});
 // send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
