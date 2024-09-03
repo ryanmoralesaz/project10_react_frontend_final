@@ -1,2 +1,0 @@
-- I'm still confused about the order of syncing, seeding and migrating a database.
-- Why is the course 'Debugging 101' card not the same height as the others.
