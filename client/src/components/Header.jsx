@@ -1,9 +1,8 @@
-import { useContext } from "react";
 import { Link } from "react-router-dom";
-import UserContext from "../context/UserContext";
+import { useApi } from "../context/useApi";
 
 export default function Header() {
-  const { authUser, actions } = useContext(UserContext);
+  const { authUser, signOut } = useApi();
 
   return (
     <header>
@@ -14,9 +13,12 @@ export default function Header() {
         <nav>
           {authUser ? (
             <ul className="header--signedin">
-              <li>Welcome, {authUser.firstName}{authUser.lastName}!</li>
               <li>
-                <button onClick={actions.signOut}>Sign Out</button>
+                Welcome, {authUser.firstName}
+                {authUser.lastName}!
+              </li>
+              <li>
+                <button onClick={() => signOut()}>Sign Out</button>
               </li>
             </ul>
           ) : (

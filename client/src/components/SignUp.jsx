@@ -1,9 +1,10 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import UserContext from "../context/UserContext";
 import ValidationErrors from "./ValidationErrors";
+import { useApi } from "../context/useApi";
 
 export default function SignUp() {
+  const { callApi, signUp } = useApi();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -13,7 +14,6 @@ export default function SignUp() {
 
   const [errors, setErrors] = useState([]);
   const navigate = useNavigate();
-  const { actions } = useContext(UserContext);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -24,7 +24,7 @@ export default function SignUp() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const result = await actions.signUp(formData);
+    const result = await callApi(signUp, formData);
     if (result.errors) {
       setErrors(result.errors);
     } else {

@@ -17,7 +17,6 @@ export const UserProvider = ({ children }) => {
         emailAddress: user.emailAddress,
         password: user.password,
       };
-      console.log("updating auth user:", authUser);
       setAuthUser(authUser);
       Cookies.set("authenticatedUser", JSON.stringify(authUser), {
         expires: 1,
@@ -97,14 +96,14 @@ export const UserProvider = ({ children }) => {
     async (force = false) => {
       const now = Date.now();
       if (!force && lastFetchTime && now - lastFetchTime < CACHE_DURATION) {
-        console.log("Using cached courses data");
+        console.log("Using cached courses data", courses);
         return;
       }
       if (isFetching) return;
       setIsFetching(true);
       try {
         const response = await fetch(
-          ` http://localhost:5000/api/courses?_=${now}`
+          `http://localhost:5000/api/courses?_=${now}`
         );
 
         if (response.ok) {
@@ -114,17 +113,19 @@ export const UserProvider = ({ children }) => {
             setLastFetchTime(now);
           } else {
             console.error("data is not an array", data);
+            setCourses([]);
           }
         } else {
           throw new Error("Failed to fetch courses");
         }
       } catch (error) {
         console.error("Error fetching courses:", error);
+        setCourses([]);
       } finally {
         setIsFetching(false);
       }
     },
-    [isFetching, lastFetchTime, CACHE_DURATION]
+    [isFetching, lastFetchTime, CACHE_DURATION, courses]
   );
 
   const fetchCourse = useCallback(async (id) => {
@@ -135,13 +136,12 @@ export const UserProvider = ({ children }) => {
       return { success, error };
     }
     const data = await response.json();
-    console.log("fetched course data", data);
     return { success: true, course: data };
   }, []);
 
   const deleteCourse = useCallback(
     async (id) => {
-      if (!authUser) return false;
+      if (!authUser) return { success: false, error: "User not authenticated" };
       try {
         const response = await fetch(
           `http://localhost:5000/api/courses/${id}`,
@@ -154,20 +154,27 @@ export const UserProvider = ({ children }) => {
             },
           }
         );
-        console.log("Delete response status", response.status);
         if (response.status === 204) {
           setCourses((prevCourses) =>
             prevCourses.filter((course) => course.id !== id)
           );
-          return true;
+          return { success: true };
         } else {
           const errorData = await response.json();
           console.error("Delete error", errorData);
-          return false;
+          return {
+            success: false,
+            error:
+              errorData.message ||
+              "An error occurred while deleting the course",
+          };
         }
       } catch (error) {
         console.error("Error deleting course:", error);
-        return false;
+        return {
+          success: false,
+          error: error.message || "An error occurred while deleting the course",
+        };
       }
     },
     [authUser]
@@ -236,7 +243,6 @@ export const UserProvider = ({ children }) => {
         });
         if (response.status === 201) {
           const locationHeader = response.headers.get("Location");
-          console.log("location header is ", locationHeader);
           if (locationHeader) {
             const newCourseId = locationHeader.split("/").pop();
             return { success: true, errors: newCourseId };
@@ -310,4 +316,3 @@ export const UserProvider = ({ children }) => {
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
   );
 };
-export default UserContext;

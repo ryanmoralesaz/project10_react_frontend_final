@@ -11,6 +11,7 @@ export default function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { callApi, fetchCourse, deleteCourse, fetchCourses, authUser } =
     useApi();
@@ -36,14 +37,22 @@ export default function CourseDetail() {
   }, [id, fetchCourse, callApi, navigate]);
 
   const handleDelete = async () => {
-    const result = await callApi(() => deleteCourse(id));
-    if (result && result.success) {
-      console.log("course deleted successfully");
-      await callApi(() => fetchCourses(true));
-      navigate("/");
-    } else {
-      console.error("failed to delete course");
-      setError("Failed to delete course");
+    setIsDeleting(true);
+    try {
+      const result = await callApi(() => deleteCourse(id));
+      if (result.success) {
+        console.log("course deleted successfully");
+        await callApi(() => fetchCourses(true));
+        navigate("/");
+      } else {
+        console.error("failed to delete course");
+        setError("Failed to delete course");
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+      setError("An unexpected error occurred");
+    } finally {
+      setIsDeleting(false);
     }
   };
   if (loading) return <p>Loading...</p>;
@@ -56,6 +65,7 @@ export default function CourseDetail() {
         courseUserId={course.User.id}
         onDelete={handleDelete}
         isOwner={authUser && authUser.id === course.User.id}
+        isDeleting={isDeleting}
       />
       <h2>Course Detail</h2>
       <form className="course--detail">

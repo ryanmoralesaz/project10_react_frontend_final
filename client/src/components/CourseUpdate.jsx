@@ -1,12 +1,12 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import UserContext from "../context/UserContext";
+import { useApi } from "../context/useApi";
 import ValidationErrors from "./ValidationErrors";
 
 export default function CourseUpdate() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { actions } = useContext(UserContext);
+  const { callApi, fetchCourse, updateCourse, fetchCourses } = useApi();
   const [course, setCourse] = useState({
     title: "",
     description: "",
@@ -17,19 +17,19 @@ export default function CourseUpdate() {
 
   useEffect(() => {
     const loadCourse = async () => {
-      const { success, course, error } = await actions.fetchCourse(id);
-      if (success) {
-        setCourse(course);
-      } else if (error === "Course not found") {
+      const result = await callApi(fetchCourse, id);
+      if (result.success) {
+        setCourse(result.course);
+      } else if (result.error === "Course not found") {
         navigate("/notfound");
-      } else if (error === "Access denied") {
+      } else if (result.error === "Access denied") {
         navigate("/forbidden");
       } else {
-        setErrors([error]);
+        setErrors([result.error]);
       }
     };
     loadCourse();
-  }, [id, actions, navigate]);
+  }, [id, callApi, fetchCourse, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -41,9 +41,9 @@ export default function CourseUpdate() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const { success, errors } = await actions.updateCourse(id, course);
-    if (success) {
-      actions.fetchCourses(true);
+    const result = await callApi(updateCourse, id, course);
+    if (result.success) {
+      await callApi(fetchCourses, true);
       navigate(`/courses/${id}`);
     } else if (errors.includes("Access denied")) {
       navigate("/forbidden");

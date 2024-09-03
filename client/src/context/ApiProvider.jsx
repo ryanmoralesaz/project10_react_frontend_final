@@ -5,15 +5,16 @@ import { useUser } from "./useUser";
 
 export const ApiProvider = ({ children }) => {
   const navigate = useNavigate();
-  const { actions } = useUser();
+  const { actions, courses, authUser } = useUser();
 
   const callApi = useCallback(
     async (apiFunction, ...args) => {
-          try {
-              console.log('calling with args', ...args);
+      try {
         const result = await apiFunction(...args);
-        console.log("api result", result);
-        if (result && result.error === "Internal Server Error") {
+        if (
+          result &&
+          (result.error === "Internal Server Error" || result.status >= 500)
+        ) {
           navigate("/error");
           return null;
         }
@@ -30,6 +31,8 @@ export const ApiProvider = ({ children }) => {
   const apiValue = {
     callApi,
     ...actions,
+    courses,
+    authUser
   };
 
   return <ApiContext.Provider value={apiValue}>{children}</ApiContext.Provider>;

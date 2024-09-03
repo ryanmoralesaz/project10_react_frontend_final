@@ -4,16 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function ActionsBar({
   courseId,
-  // courseUserId,
   onDelete,
   isOwner,
+  isDeleting,
 }) {
-  // const { authUser } = useContext(UserContext);
   const navigate = useNavigate();
-  // console.log("Authuser id:", authUser?.id, "Type", typeof authUser?.id);
-
-  // console.log("course user id", courseUserId, "type", typeof courseUserId);
-  // console.log("is owner", isOwner);
   return (
     <div className="actions--bar">
       <div className="wrap">
@@ -22,14 +17,15 @@ export default function ActionsBar({
             <Link className="button" to={`/courses/${courseId}/update`}>
               Update Course
             </Link>
-            <button className="button" onClick={onDelete}>
-              Delete Course
+            <button className="button" onClick={onDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete Course"}
             </button>
           </>
         )}
         <button
           className="button button-secondary"
           onClick={() => navigate("/")}
+          disabled={isDeleting}
         >
           Return to List
         </button>

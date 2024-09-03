@@ -1,11 +1,11 @@
-import { useState, useContext } from "react";
+import { useState} from "react";
 import { useNavigate } from "react-router-dom";
-import UserContext from "../context/UserContext";
 import ValidationErrors from "./ValidationErrors";
+import { useApi } from "../context/useApi";
 
 export default function CourseCreate() {
   // const apiUrl = import.meta.env.VITE_API_URL;
-  const { authUser, actions } = useContext(UserContext);
+  const { callApi, addCourse, fetchCourses, authUser } = useApi();
   const navigate = useNavigate();
   const [course, setCourse] = useState({
     title: "",
@@ -31,9 +31,9 @@ export default function CourseCreate() {
         ...course,
         userId: authUser.id,
       };
-      const result = await actions.addCourse(courseData);
+      const result = await callApi(addCourse, courseData);
       if (result.success) {
-        await actions.fetchCourses(true);
+        await callApi(fetchCourses, true);
         if (result.courseId) {
           navigate(`/courses/${result.courseId}`);
         } else {

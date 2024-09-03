@@ -1,20 +1,20 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import UserContext from "../context/UserContext";
 import ValidationErrors from "./ValidationErrors";
+import { useApi } from "../context/useApi";
 
 export default function SignIn() {
+  const { callApi, signIn } = useApi();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { actions } = useContext(UserContext);
   const [errors, setErrors] = useState([]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const user = await actions.signIn({ email, password });
+    const user = await callApi(signIn, { email, password });
     if (user && user.id) {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true }); // Redirect to home after sign in
