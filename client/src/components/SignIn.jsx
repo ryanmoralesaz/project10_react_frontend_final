@@ -22,11 +22,22 @@ export default function SignIn() {
     const result = await callApi(
       () => signIn({ email, password }),
       (error) => {
-        setErrors(
-          Array.isArray(error.errors)
-            ? error.errors
-            : [error.message || "Sign in failed"]
-        );
+        // Error handling for different error structures
+        console.log("Error received in SignIn:", error);
+
+        if (Array.isArray(error)) {
+          // Handle array errors (e.g., validation errors)
+          setErrors(error);
+        } else if (error.errors && Array.isArray(error.errors)) {
+          // Handle errors object with an errors array
+          setErrors(error.errors);
+        } else if (error.message) {
+          // Handle a generic error message
+          setErrors([error.message]);
+        } else {
+          // Fallback for unknown error structure
+          setErrors(["An unknown error occurred during sign in."]);
+        }
       }
     );
     if (result && result.success) {

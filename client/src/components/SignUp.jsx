@@ -28,11 +28,21 @@ export default function SignUp() {
     const result = await callApi(
       () => signUp(formData),
       (error) => {
-        setErrors(
-          Array.isArray(error.errors)
-            ? error.errors
-            : [error.message || "Sign up failed"]
-        );
+        console.log("Error received in SignUp:", error);
+
+        if (Array.isArray(error)) {
+          // Handle array errors (e.g., validation errors)
+          setErrors(error);
+        } else if (error.errors && Array.isArray(error.errors)) {
+          // Handle errors object with an errors array
+          setErrors(error.errors);
+        } else if (error.message) {
+          // Handle a generic error message
+          setErrors([error.message]);
+        } else {
+          // Fallback for unknown error structure
+          setErrors(["An unknown error occurred during sign up."]);
+        }
       }
     );
     if (result.success) {

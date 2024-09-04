@@ -36,11 +36,23 @@ export default function CreateCourse() {
     const result = await callApi(
       () => actions.addCourse(courseData),
       (error) => {
-        setErrors(
-          Array.isArray(error.errors)
-            ? error.errors
-            : [error.message || "An unknown error occurred"]
-        );
+        // Check if the error is an array (e.g., validation errors)
+        if (Array.isArray(error)) {
+          console.log("Validation errors:", error);
+          setErrors(error); // Set the array of errors directly
+        } else if (error.errors && Array.isArray(error.errors)) {
+          // If it's an object with an 'errors' array (additional check)
+          console.log("Validation errors:", error.errors);
+          setErrors(error.errors);
+        } else if (error.message) {
+          // If there's a generic error message
+          console.log("Error message:", error.message);
+          setErrors([error.message]);
+        } else {
+          // Fallback if the error structure is unknown
+          console.log("Unknown error structure:", error);
+          setErrors(["An unknown error occurred"]);
+        }
       }
     );
     if (result && result.success) {

@@ -41,11 +41,21 @@ export default function CourseDetail() {
   }, [error, navigate]);
 
   const handleDelete = async () => {
+    console.log(`Initiating delete for course ${id}`);
     setIsDeleting(true);
-    const result = await callApi();
+    const result = await callApi(
+      () => actions.deleteCourse(id),
+      (error) => {
+        console.error(`Error in handleDelete for course ${id}:`, error);
+        setError(error.message || "Failed to delete course");
+      }
+    );
     if (result && result.success) {
-      await actions.fetchCourse(true);
+      console.log(`Course ${id} deleted successfully, navigating to home`);
+      await actions.fetchCourses(true);
       navigate("/", { replace: true });
+    } else {
+      console.log(`Failed to delete course ${id}`);
     }
     setIsDeleting(false);
   };

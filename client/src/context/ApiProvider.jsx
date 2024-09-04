@@ -1,50 +1,35 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiContext } from "./Context";
 
 export const ApiProvider = ({ children }) => {
   const navigate = useNavigate();
-
   const callApi = useCallback(
     async (apiFunction, errorHandler, ...args) => {
       try {
         const result = await apiFunction(...args);
-        if (result && result.status >= 400) {
-          switch (result.status) {
-            case 401:
-              navigate("/signin");
-              break;
-            case 403:
-              navigate("/forbidden");
-              break;
-            case 404:
-              navigate("/notfound");
-              break;
-            case 500:
-              navigate("/error");
-              break;
-            default:
-              if (errorHandler) {
-                errorHandler(result);
-              } else {
-                console.error("API error:", result);
-              }
-          }
-          return null;
+        // Check if result is undefined
+        if (result === undefined) {
+          throw new Error("API function did not return a result");
+        }
+        // Only check for success if result is not undefined
+        if (result && !result.success) {
+          throw result.errors || result.error || "An unknown error occurred";
         }
         return result;
       } catch (error) {
         console.error("API call failed:", error);
-        navigate("/error");
-        return null;
+        // Check if the error is a server-side 500 error
+        if (error.message.includes("500")) {
+          navigate("/error"); // Redirect to UnhandledError component
+        }
+        return errorHandler ? errorHandler(error) : { success: false, error };
       }
     },
     [navigate]
   );
 
-  const apiValue = {
-    callApi,
-  };
+  const apiValue = useMemo(() => ({ callApi }), [callApi]);
 
   return <ApiContext.Provider value={apiValue}>{children}</ApiContext.Provider>;
 };

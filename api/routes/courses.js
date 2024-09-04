@@ -9,7 +9,7 @@ const authenticateUser = require('./utils/auth.js');
 const router = express.Router();
 
 // GET /api/courses get a list of all of the user's courses
-router.get('/courses', async (req, res) => {
+router.get('/courses', async (req, res, next) => {
   try {
     // use a promise to find all of the user courses but exclude some attributes
     // initialize the courses 
@@ -36,11 +36,7 @@ router.get('/courses', async (req, res) => {
     res.status(200).json(courses);
   } catch (error) {
     // if there is a server lookup problem return a standard server error message
-    console.error('Error fetching the courses:', error);
-    res.status(500).json({
-      message: 'Error fetching the courses',
-      error
-    });
+    next(error);
   }
 });
 
@@ -105,15 +101,14 @@ router.post('/courses', authenticateUser, async (req, res) => {
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       const errors = error.errors.map((err) => err.message);
-      // send a 400 bad request error to the client with the destructured error message
-      res
-        .status(400)
-        .json({ errors });
+      console.log('Validation errors:', errors);
+      res.status(400).json({ errors });
     } else {
       console.error('Error creating the course:', error);
-      res
-        .status(500)
-        .json({ message: 'There was an error creating the course', error: error.message });
+      res.status(500).json({
+        message: 'There was an error creating the course',
+        error: error.message
+      });
     }
   }
 });

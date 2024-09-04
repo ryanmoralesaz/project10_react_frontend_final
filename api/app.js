@@ -26,6 +26,10 @@ app.use(cors(
     credentials: true, // allow credentials
   }
 ));
+app.use((req, res, next) => {
+  res.header('Content-Type', 'application/json');
+  next();
+});
 // IIFE to athenticate the database
 (async () => {
   try {
@@ -48,37 +52,38 @@ app.use('/api', usersRouter); // Use the routers for the /api path
 app.use('/api', coursesRouter); // Use the courses router
 app.get('/api/test-forbidden', (req, res) => {
   res.status(403).json({
-    message: 'Forbidden'
+    error: 'Forbidden',
+    message: 'Access denied'
   });
 });
-app.get('/api/test-error', (req, res) => {
-  res.status(500).json({
-    message: 'Internal Server Error'
-  });
+app.get('/api/test-error', (req, res, next) => {
+  console.log('test error route hit');
+  const error = new Error('This is a test 500 eror');
+  error.status = 500;
+  next(error);
 });
 // send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
+    error: 'Not Found',
     message: 'Route Not Found'
   });
 });
 
 // setup a global error handler
-app.use((err, req, res) => {
-  if (enableGlobalErrorLogging) {
-    console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
-  }
-
-  res.status(err.status || 500).json({
-    message: err.message,
-    error: {}
+app.use((err, req, res, next) => {
+  console.error(`Global error handler: ${err.stack}`);
+  res.status(err.status || 500)
+  res.json({
+    error: {
+      message: err.message || 'Internal Server Error',
+      status: err.status || 500
+    }
   });
 });
 
-// set our port
-app.set('port', process.env.PORT || 5000);
-
-// start listening on our port
-const server = app.listen(app.get('port'), () => {
-  console.log(`Express server is listening on port ${server.address().port}`);
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Express server is listening on port ${PORT}`);
 });

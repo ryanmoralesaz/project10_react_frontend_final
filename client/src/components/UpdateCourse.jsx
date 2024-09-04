@@ -14,6 +14,7 @@ export default function UpdateCourse() {
     description: "",
     estimatedTime: "",
     materialsNeeded: "",
+    User: null,
   });
   const [errors, setErrors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,12 +24,23 @@ export default function UpdateCourse() {
     const result = await callApi(
       () => actions.fetchCourse(id),
       (error) => {
-        setErrors([error.message || "Failed to load course"]);
+        // Check if the error is an array or object
+        if (Array.isArray(error)) {
+          setErrors(error);
+        } else if (error.message) {
+          setErrors([error.message || "Failed to load course"]);
+        } else {
+          setErrors(["An unknown error occurred"]);
+        }
       }
     );
     if (result && result.success) {
       setCourse(result.course);
-      if (authUser && authUser.id !== result.course.userId) {
+      console.log("Loaded course:", result.course);
+      console.log("Auth user:", authUser);
+      if (authUser && authUser.id !== result.course.User.id) {
+        console.log("User does not own this course. Redirecting to forbidden.");
+
         navigate("/forbidden");
       }
     }
@@ -52,11 +64,20 @@ export default function UpdateCourse() {
     const result = await callApi(
       () => actions.updateCourse(id, course),
       (error) => {
-        setErrors(
-          Array.isArray(error.errors)
-            ? error.errors
-            : [error.message || "Failed to update course"]
-        );
+        console.log("Error received in UpdateCourse:", error);
+
+        // Handle validation errors or message errors
+        if (Array.isArray(error)) {
+          setErrors(error); // Set validation errors if they exist
+        } else if (error.errors && Array.isArray(error.errors)) {
+          setErrors(error.errors); // Handle structured errors
+        } else if (typeof error === "string") {
+          setErrors([error]); // Handle string errors
+        } else if (error.message) {
+          setErrors([error.message || "Failed to update course"]); // General error handling
+        } else {
+          setErrors(["An unknown error occurred"]);
+        }
       }
     );
     if (result && result.success) {
@@ -66,6 +87,10 @@ export default function UpdateCourse() {
   };
   if (isLoading) return <p>Loading...</p>;
   if (!authUser) return <p>Please sign in to update courses.</p>;
+  if (!course.User || authUser.id !== course.User.id) {
+    console.log("User does not own this course. Showing error message.");
+    return <p>You do not have permission to update this course.</p>;
+  }
   return (
     <>
       <h2>Update Course</h2>
