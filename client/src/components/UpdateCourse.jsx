@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCourse, useAuth } from "../context/useContext";
+import { useCourse, useAuth, useApi } from "../context/useContext";
 import ValidationErrors from "./ValidationErrors";
 
 export default function UpdateCourse() {
@@ -8,6 +8,7 @@ export default function UpdateCourse() {
   const navigate = useNavigate();
   const { actions } = useCourse();
   const { authUser } = useAuth();
+  const { callApi } = useApi();
   const [course, setCourse] = useState({
     title: "",
     description: "",
@@ -18,33 +19,21 @@ export default function UpdateCourse() {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadCourse = useCallback(async () => {
-    try {
-      const result = await actions.fetchCourse(id);
-      if (result.status === 500) {
-        navigate("/error");
-        return;
+    setIsLoading(true);
+    const result = await callApi(
+      () => actions.fetchCourse(id),
+      (error) => {
+        setErrors([error.message || "Failed to load course"]);
       }
-      if (result.success) {
-        setCourse(result.course);
-        if (authUser && authUser.id !== result.course.userId) {
-          navigate("/forbidden");
-        }
-      } else {
-        if (result.error === "Course not found") {
-          navigate("/notfound");
-        } else if (result.error === "Access denied") {
-          navigate("/forbidden");
-        } else {
-          setErrors([result.error]);
-        }
+    );
+    if (result && result.success) {
+      setCourse(result.course);
+      if (authUser && authUser.id !== result.course.userId) {
+        navigate("/forbidden");
       }
-    } catch (error) {
-      console.error("Error loading course:", error);
-      setErrors(["An unexpected error occurred"]);
-    } finally {
-      setIsLoading(false);
     }
-  }, [authUser, id, actions, navigate]);
+    setIsLoading(false);
+  }, [authUser, id, actions, navigate, callApi]);
 
   useEffect(() => {
     loadCourse();
@@ -60,23 +49,19 @@ export default function UpdateCourse() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    try {
-      const result = await actions.updateCourse(id, course);
-      if (result.success) {
-        await actions.fetchCourses(true);
-        navigate(`/courses/${id}`);
-      } else if (Array.isArray(result.errors)) {
-        setErrors(result.errors);
-      } else if (result.error === "Access denied") {
-        navigate("/forbidden");
-      } else {
-        setErrors([
-          result.error || "An error occured while udpating the course",
-        ]);
+    const result = await callApi(
+      () => actions.updateCourse(id, course),
+      (error) => {
+        setErrors(
+          Array.isArray(error.errors)
+            ? error.errors
+            : [error.message || "Failed to update course"]
+        );
       }
-    } catch (error) {
-      console.error("Error updating course:", error);
-      navigate("/error");
+    );
+    if (result && result.success) {
+      await actions.fetchCourses(true);
+      navigate(`/courses/${id}`);
     }
   };
   if (isLoading) return <p>Loading...</p>;
@@ -98,7 +83,6 @@ export default function UpdateCourse() {
                 onChange={handleChange}
               />
               <label htmlFor="description">Course Description</label>
-
               <textarea
                 id="description"
                 name="description"
@@ -116,7 +100,6 @@ export default function UpdateCourse() {
                 onChange={handleChange}
               />
               <label htmlFor="materialsNeeded">Materials Needed</label>
-
               <textarea
                 id="materialsNeeded"
                 name="materialsNeeded"

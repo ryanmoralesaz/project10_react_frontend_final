@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
-import { useCourse, useAuth } from "../context/useContext";
+import { useCourse, useAuth, useApi } from "../context/useContext";
 
 export default function CreateCourse() {
   // const apiUrl = import.meta.env.VITE_API_URL;
   const { authUser } = useAuth();
   const { actions } = useCourse();
+  const { callApi } = useApi();
   const navigate = useNavigate();
   const [course, setCourse] = useState({
     title: "",
@@ -27,28 +28,24 @@ export default function CreateCourse() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    try {
-      const courseData = {
-        ...course,
-        userId: authUser.id,
-      };
-      const result = await actions.addCourse(courseData);
-      if (result.success) {
-        await actions.fetchCourses(true);
-        if (result.courseId) {
-          navigate(`/courses/${result.courseId}`);
-        } else {
-          navigate("/");
-        }
-      } else {
-        if (result.errors.includes("Internal Server Error")) {
-          navigate("/error");
-        } else {
-          setErrors(result.errors || ["An unknown error occured"]);
-        }
+
+    const courseData = {
+      ...course,
+      userId: authUser.id,
+    };
+    const result = await callApi(
+      () => actions.addCourse(courseData),
+      (error) => {
+        setErrors(
+          Array.isArray(error.errors)
+            ? error.errors
+            : [error.message || "An unknown error occurred"]
+        );
       }
-    } catch (error) {
-      setErrors([error.message || "An unknown error occured"]);
+    );
+    if (result && result.success) {
+      await actions.fetchCourses(true);
+      navigate(result.courseId ? `/courses/${result.courseId}` : "/");
     }
   };
 

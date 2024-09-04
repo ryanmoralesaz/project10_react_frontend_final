@@ -3,37 +3,30 @@ import { useParams, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import ActionsBar from "./ActionsBar";
 import ValidationErrors from "./ValidationErrors";
-import { useCourse, useAuth } from "../context/useContext";
+import { useCourse, useAuth, useApi } from "../context/useContext";
 
 export default function CourseDetail() {
   // const apiUrl = import.meta.env.VITE_API_URL;
   const { id } = useParams();
   const [course, setCourse] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { actions } = useCourse();
   const { authUser } = useAuth();
+  const { callApi } = useApi();
   const navigate = useNavigate();
 
   const loadCourse = useCallback(async () => {
-    try {
-      const result = await actions.fetchCourse(id);
-      console.log("detail result", result);
-      if (result) {
-        if (result.success) {
-          setCourse(result.course);
-        } else {
-          setError(result.error);
-        }
+    const result = await callApi(
+      () => actions.fetchCourse(id),
+      (error) => {
+        setError(error.message || "An unexpected error occurred");
       }
-    } catch (error) {
-      console.error("Error loading course:", error);
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
+    );
+    if (result && result.success) {
+      setCourse(result.course);
     }
-  }, [id, actions]);
+  }, [id, actions, callApi]);
 
   useEffect(() => {
     loadCourse();
@@ -49,23 +42,15 @@ export default function CourseDetail() {
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    try {
-      const result = await actions.deleteCourse(id);
-      if (result.success) {
-        await actions.fetchCourses(true);
-        navigate("/", { replace: true });
-      } else {
-        console.error("Failed to delete course:", result.error);
-        setError(result.error || "Failed to delete course");
-      }
-    } catch (error) {
-      console.error("Error in handleDelete:", error);
-      setError("An unexpected error occurred");
-    } finally {
-      setIsDeleting(false);
+    const result = await callApi();
+    if (result && result.success) {
+      await actions.fetchCourse(true);
+      navigate("/", { replace: true });
     }
+    setIsDeleting(false);
   };
-  if (loading) return <p>Loading...</p>;
+
+  if (!course && !error) return <p>Loading...</p>;
   if (error) return <ValidationErrors errors={[error]} />;
   if (!course) return null;
   return (
