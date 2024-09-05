@@ -30,35 +30,37 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signIn = useCallback(
-    async ({ email, password }) => {
-      try {
-        const encodedCreds = btoa(`${email}:${password}`);
-        const response = await fetch(`http://localhost:5000/api/users/signin`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Basic ${encodedCreds}`,
-          },
-          // body: JSON.stringify(credentials),
-        });
-        console.log("Sign in response status:", response.status);
-
-        if (response.ok) {
-          const user = await response.json();
-          updateAuthUser({ ...user, password });
-          return { success: true, user };
-        } else if (response.status === 401) {
-          return {
-            success: false,
-            errors: ["User does not exist or credentials are incorrect."],
-          };
-        } else {
-          return { success: false, errors: ["Failed to authenticate"] };
-        }
-      } catch (error) {
-        console.error("Error signing in:", error);
-        return { success: false, errors: ["An unexpected error occurred"] };
+    async ({ emailAddress, password }) => {
+      if (!emailAddress || !password) {
+        // return {
+        //   success: false,
+        //   errors: ["Email and password are required"],
+        // };
+        throw { errors: ["Email and password are required"] };
       }
+      const encodedCreds = btoa(`${emailAddress}:${password}`);
+      const response = await fetch(`http://localhost:5000/api/users/signin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${encodedCreds}`,
+        },
+        // body: JSON.stringify(credentials),
+      });
+      console.log("Sign in response status:", response.status);
+      if (response.status === 500) {
+        throw { errors: ["500 Internal Server Error"], status: 500 };
+      }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw {
+          success: false,
+          errors: errorData.errors || ["Failed to authenticate"],
+        };
+      }
+      const user = await response.json();
+      updateAuthUser({ ...user, password });
+      return { success: true, user };
     },
     [updateAuthUser]
   );
@@ -74,21 +76,22 @@ export const AuthProvider = ({ children }) => {
 
         if (response.ok) {
           return signIn({
-            email: userData.emailAddress,
+            emailAddress: userData.emailAddress,
             password: userData.password,
           });
-        } else if (response.status === 400) {
-          const data = await response.json();
-          return {
-            success: false,
-            errors: data.errors || ["An error occurred during sign up."],
-          };
         } else {
-          return { success: false, errors: ["Failed to sign up"] };
+          const errorData = await response.json();
+          throw {
+            success: false,
+            errors: errorData.errors || ["An error occurred during sign up."],
+          };
         }
       } catch (error) {
         console.error("Error signing up:", error);
-        return { errors: ["An unexpected error occurred"] };
+        throw {
+          success: false,
+          errors: error.errors || ["An unexpected error occurred"],
+        };
       }
     },
     [signIn]

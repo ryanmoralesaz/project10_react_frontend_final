@@ -1,46 +1,72 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
 import { useAuth, useApi } from "../context/useContext";
 
 export default function SignIn() {
-  const { signIn, authUser } = useAuth();
+  const { signIn } = useAuth();
   const { callApi } = useApi();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [credentials, setCredentials] = useState({
+    emailAddress: "",
+    password: "",
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const [errors, setErrors] = useState([]);
 
-  useEffect(() => {
-    console.log("Current authUser:", authUser);
-  }, [authUser]);
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setCredentials((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const result = await callApi(
-      () => signIn({ email, password }),
-      (error) => {
-        // Error handling for different error structures
-        console.log("Error received in SignIn:", error);
+    // Perform client-side validation
+    const clientErrors = [];
+    if (!credentials.emailAddress) clientErrors.push("Email is required");
+    if (!credentials.password) clientErrors.push("Password is required");
 
-        if (Array.isArray(error)) {
-          // Handle array errors (e.g., validation errors)
-          setErrors(error);
-        } else if (error.errors && Array.isArray(error.errors)) {
-          // Handle errors object with an errors array
-          setErrors(error.errors);
-        } else if (error.message) {
-          // Handle a generic error message
-          setErrors([error.message]);
+    if (clientErrors.length > 0) {
+      setErrors(clientErrors);
+      return;
+    }
+    const result = await callApi(
+      () => signIn(credentials),
+      // (errorResult) => {
+      //   // console.log("Error received in SignIn:", errorResult.errors);
+      //   // setErrors(
+      //   //   Array.isArray(errorResult.errors)
+      //   //     ? errorResult.errors
+      //   //     : [errorResult.errors]
+      //   // );
+      //   if (
+      //     errorResult.errors &&
+      //     errorResult.errors.some(
+      //       (e) => e.includes("500") || errorResult.status === 500
+      //     )
+      //   ) {
+      //     navigate("/error");
+      //   } else {
+      //     setErrors(errorResult.errors || ["An unknown error occurred"]);
+      //   }
+      //   return errorResult;
+      // }
+      (error) => {
+        console.log("Error received in SignIn:", error);
+        if (
+          error.status === 500 ||
+          (error.errors && error.errors.some((e) => e.includes("500")))
+        ) {
+          navigate("/error");
         } else {
-          // Fallback for unknown error structure
-          setErrors(["An unknown error occurred during sign in."]);
+          setErrors(error.errors || ["An unknown error occurred"]);
         }
+        return { success: false, errors: error.errors };
       }
     );
-    if (result && result.success) {
+
+    if (result.success) {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     }
@@ -56,16 +82,16 @@ export default function SignIn() {
           id="emailAddress"
           name="emailAddress"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={credentials.emailAddress}
+          onChange={handleChange}
         />
         <label htmlFor="password">Password</label>
         <input
           id="password"
           name="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={credentials.password}
+          onChange={handleChange}
         />
         <button className="button" type="submit">
           Sign In

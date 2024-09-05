@@ -11,7 +11,8 @@ const authenticateUser = require('./utils/auth.js');
 const router = express.Router();
 
 // GET /api/users - get the current user
-router.get('/users', authenticateUser, async (req, res) => {
+router.get('/users', authenticateUser, async (req, res, next) => {
+// return next(new Error('500 Test Error'));
   // if the users credentials pass the authenticateUser middleware function
   // initialize user to the currentUser that sent the request
   const user = req.currentUser;
@@ -26,7 +27,8 @@ router.get('/users', authenticateUser, async (req, res) => {
 });
 
 // POST /api/users - create a new user
-router.post('/users', async (req, res) => {
+router.post('/users', async (req, res, next) => {
+  // return next(new Error('500 Test Error'));
   try {
     // destructure the request body specifically looking for the password field, abstract everything else with the rest operator ...
     const { password, ...rest } = req.body;
@@ -61,11 +63,12 @@ router.post('/users', async (req, res) => {
     } else {
       // if not a sequelize error return a standard server error message.
       console.error('There was an error creating the user:', error);
-      res.status(500).json({ message: 'There was an error creating the user' });
+      res.status(500).json({ errors: ['There was an error creating the user'] });
     }
   }
 });
-router.post('/users/signin', authenticateUser, (req, res) => {
+router.post('/users/signin', authenticateUser, (req, res, next) => {
+// return next(new Error('500 Test Error'));
   const user = req.currentUser;
   console.log("Authenticated user:", user ? user.emailAddress : "None");
 

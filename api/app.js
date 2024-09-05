@@ -42,7 +42,8 @@ app.use((req, res, next) => {
 
 // setup a friendly greeting for the root route
 
-app.get('/', (req, res) => {
+app.get('/', (req, res, next) => {
+  // return next(new Error('500 Test Error'));
   res.json({
     message: 'Welcome to the REST API project!'
   });
@@ -52,33 +53,34 @@ app.use('/api', usersRouter); // Use the routers for the /api path
 app.use('/api', coursesRouter); // Use the courses router
 app.get('/api/test-forbidden', (req, res) => {
   res.status(403).json({
-    error: 'Forbidden',
-    message: 'Access denied'
+    errors: ['Access denied']
   });
 });
-app.get('/api/test-error', (req, res, next) => {
-  console.log('test error route hit');
-  const error = new Error('This is a test 500 eror');
-  error.status = 500;
-  next(error);
-});
+// app.get('/api/test-error', (req, res, next) => {
+//   console.log('test error route hit');
+//   const error = new Error('This is a test 500 eror');
+//   error.status = 500;
+//   next(error);
+// });
 // send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
-    error: 'Not Found',
-    message: 'Route Not Found'
+    errors: ['Route Not Found']
   });
 });
 
 // setup a global error handler
 app.use((err, req, res, next) => {
   console.error(`Global error handler: ${err.stack}`);
-  res.status(err.status || 500)
-  res.json({
-    error: {
-      message: err.message || 'Internal Server Error',
-      status: err.status || 500
-    }
+  let statusCode = err.status || 500;
+  let errors = [err.message || 'Internal Server Error'];
+  if (err.name === "SequelizeValidationError") {
+    statusCode = 400;
+    errors = err.errors.map(error => error.message);
+  }
+  res.status(statusCode).json({
+    success: false,
+    errors: errors
   });
 });
 

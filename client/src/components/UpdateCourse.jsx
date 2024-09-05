@@ -23,15 +23,17 @@ export default function UpdateCourse() {
     setIsLoading(true);
     const result = await callApi(
       () => actions.fetchCourse(id),
-      (error) => {
-        // Check if the error is an array or object
-        if (Array.isArray(error)) {
-          setErrors(error);
-        } else if (error.message) {
-          setErrors([error.message || "Failed to load course"]);
-        } else {
-          setErrors(["An unknown error occurred"]);
+      (errorResult) => {
+        console.log("Error loading course:", errorResult);
+        if (
+          errorResult.errors &&
+          errorResult.errors.some((error) => error.includes("500"))
+        ) {
+          navigate("/error");
+          return errorResult;
         }
+        setErrors(errorResult.errors || ["Failed to load course"]);
+        return errorResult;
       }
     );
     if (result && result.success) {
@@ -61,26 +63,28 @@ export default function UpdateCourse() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setErrors([]);
     const result = await callApi(
       () => actions.updateCourse(id, course),
-      (error) => {
-        console.log("Error received in UpdateCourse:", error);
-
-        // Handle validation errors or message errors
-        if (Array.isArray(error)) {
-          setErrors(error); // Set validation errors if they exist
-        } else if (error.errors && Array.isArray(error.errors)) {
-          setErrors(error.errors); // Handle structured errors
-        } else if (typeof error === "string") {
-          setErrors([error]); // Handle string errors
-        } else if (error.message) {
-          setErrors([error.message || "Failed to update course"]); // General error handling
-        } else {
-          setErrors(["An unknown error occurred"]);
+      (errorResult) => {
+        if (
+          errorResult.errors &&
+          errorResult.errors.some((error) => error.includes("500"))
+        ) {
+          navigate("/error");
+          return errorResult;
         }
+        const errorMessages = errorResult.errors || [
+          "An unknown error occurred",
+        ];
+        setErrors(errorMessages);
+        return errorResult;
       }
     );
-    if (result && result.success) {
+    if (!result.success && result.errors) {
+      setErrors(result.errors);
+    }
+    if (result.success) {
       await actions.fetchCourses(true);
       navigate(`/courses/${id}`);
     }
@@ -88,7 +92,6 @@ export default function UpdateCourse() {
   if (isLoading) return <p>Loading...</p>;
   if (!authUser) return <p>Please sign in to update courses.</p>;
   if (!course.User || authUser.id !== course.User.id) {
-    console.log("User does not own this course. Showing error message.");
     return <p>You do not have permission to update this course.</p>;
   }
   return (

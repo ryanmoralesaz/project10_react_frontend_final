@@ -28,34 +28,34 @@ export default function CreateCourse() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
+    const courseData = { ...course, userId: authUser.id };
+    console.log("handleSubmit: Submitting course data:", courseData);
 
-    const courseData = {
-      ...course,
-      userId: authUser.id,
-    };
     const result = await callApi(
       () => actions.addCourse(courseData),
-      (error) => {
-        // Check if the error is an array (e.g., validation errors)
-        if (Array.isArray(error)) {
-          console.log("Validation errors:", error);
-          setErrors(error); // Set the array of errors directly
-        } else if (error.errors && Array.isArray(error.errors)) {
-          // If it's an object with an 'errors' array (additional check)
-          console.log("Validation errors:", error.errors);
-          setErrors(error.errors);
-        } else if (error.message) {
-          // If there's a generic error message
-          console.log("Error message:", error.message);
-          setErrors([error.message]);
-        } else {
-          // Fallback if the error structure is unknown
-          console.log("Unknown error structure:", error);
-          setErrors(["An unknown error occurred"]);
+      (errorResult) => {
+        console.log(
+          "handleSubmit: Error received in CreateCourse:",
+          errorResult
+        );
+        if (
+          errorResult.errors &&
+          errorResult.errors.some((error) => error.includes("500"))
+        ) {
+          navigate("/error");
+          return errorResult;
         }
+        const errorMessages = errorResult.errors || [
+          errorResult.message || "An unknown error occurred",
+        ];
+        setErrors(errorMessages);
+        return errorResult;
       }
     );
-    if (result && result.success) {
+    if (!result.success && result.errors) {
+      setErrors(result.errors);
+    }
+    if (result.success) {
       await actions.fetchCourses(true);
       navigate(result.courseId ? `/courses/${result.courseId}` : "/");
     }

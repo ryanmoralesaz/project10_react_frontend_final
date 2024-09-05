@@ -3,6 +3,8 @@ import { CourseContext } from "./Context";
 import { useAuth, useApi } from "./useContext";
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 export const CourseProvider = ({ children }) => {
   // console.log("API_BASE_URL:", API_BASE_URL);
   const { authUser } = useAuth();
@@ -10,8 +12,11 @@ export const CourseProvider = ({ children }) => {
   const [courses, setCourses] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState(null);
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+  const handleApiError = (error) => {
+    console.error("API Error:", error);
+    return error.error || error;
+  };
   const fetchCourses = useCallback(
     async (force = false) => {
       const now = Date.now();
@@ -19,267 +24,175 @@ export const CourseProvider = ({ children }) => {
         console.log("Using cached courses data", courses);
         return { success: true, courses }; // Return cached data with success flag
       }
-      if (isFetching) return { success: false, error: "Already fetching" };
+      if (isFetching) return { success: false, errors: ["Already fetching"] };
       setIsFetching(true);
       try {
-        const result = await callApi(
-          async () => {
-            const response = await fetch(
-              `http://localhost:5000/api/courses?_=${now}`
-            );
+        return await callApi(async () => {
+          const response = await fetch(
+            `http://localhost:5000/api/courses?_=${now}`
+          );
 
-            if (!response.ok) {
-              throw new Error("Failed to fetch courses");
-            }
-
-            const data = await response.json();
-            if (!Array.isArray(data)) {
-              throw new Error("Invalid data format");
-            }
-
-            setCourses(data);
-            setLastFetchTime(now);
-            return { success: true, courses: data };
-          },
-          (error) => {
-            console.error("Error fetching courses:", error);
-            return { success: false, error: error.message };
+          if (!response.ok) {
+            const errorData = await response.json();
+            return {
+              success: false,
+              errors: errorData.errors || ["Failed to fetch courses"],
+            };
           }
-        );
-        return result; // Ensure we always return a result
+
+          const data = await response.json();
+          if (!Array.isArray(data)) {
+            return { success: false, errors: ["Invalid data format"] };
+          }
+
+          setCourses(data);
+          setLastFetchTime(now);
+          return { success: true, courses: data };
+        });
+      } catch (error) {
+        return {
+          success: false,
+          errors: [error.message || "An unknown error occured"],
+        };
       } finally {
         setIsFetching(false);
       }
-      // return await callApi(
-      //   async () => {
-      //     const response = await fetch(
-      //       `http://localhost:5000/api/courses?_=${now}`
-      //     );
-      //     if (!response.ok) {
-      //       throw new Error("Failed to fetch courses");
-      //     }
-
-      //     const data = await response.json();
-      //     if (!Array.isArray(data)) {
-      //       throw new Error("Invalid data format");
-      //     }
-
-      //     setCourses(data);
-      //     setLastFetchTime(now);
-      //     return { success: true, courses: data };
-      // if (response.ok) {
-      //   const data = await response.json();
-      //   if (Array.isArray(data)) {
-      //     setCourses(data);
-      //     setLastFetchTime(now);
-      //     setIsFetching(false);
-      //     return { success: true, courses: data }
-      //   } else {
-      //     console.error("data is not an array", data);
-      //     setCourses([]);
-      //     setIsFetching(false);
-      //     return { success: false, error: "Invalid data format" };
-      //   }
-      // } else {
-      //   throw new Error("Failed to fetch courses");
-      // }
-      // },
-      // (error) => {
-      //   console.error("Error fetching courses:", error);
-      //   return { success: false, error: error.message };
-      //   // setCourses([]);
-      // }
-      // );
-
-      // setIsFetching(false);
     },
-    [isFetching, lastFetchTime, CACHE_DURATION, courses, callApi]
+    [isFetching, lastFetchTime, courses, callApi]
   );
 
   const fetchCourse = useCallback(
     async (id) => {
-      return await callApi(
-        async () => {
-          const response = await fetch(
-            `http://localhost:5000/api/courses/${id}`
-          );
-          if (response.status === 404) {
-            return { success: false, error: "Course not found" };
-          }
-          if (!response.ok) {
-            throw new Error("Failde to fetch course");
-          }
-          const data = await response.json();
-          return { success: true, course: data };
-        },
-        (error) => {
-          return {
-            success: false,
-            error: error.message || "Failed to fetch course",
-          };
+      return await callApi(async () => {
+        const response = await fetch(`http://localhost:5000/api/courses/${id}`);
+        if (response.status === 500) {
+          throw { success: false, errors: ["500 Internal Server Error"] };
         }
-      );
+        if (response.status === 404) {
+          return { success: false, errors: ["Course not found"] };
+        }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw errorData.errors || ["Failed to fetch course"];
+        }
+        const data = await response.json();
+        return { success: true, course: data };
+      }, handleApiError);
     },
     [callApi]
   );
 
   const deleteCourse = useCallback(
     async (id) => {
-      console.log(`Attempting to delete course with id: ${id}`);
-      if (!authUser) return { success: false, error: "User not authenticated" };
-      return await callApi(
-        async () => {
-          const response = await fetch(
-            `http://localhost:5000/api/courses/${id}`,
-            {
-              method: "DELETE",
-              headers: {
-                Authorization: `Basic ${btoa(
-                  `${authUser.emailAddress}:${authUser.password}`
-                )}`,
-              },
-            }
-          );
-          if (response.status === 204) {
-            console.log(`Course ${id} deleted successfully`);
-            setCourses((prevCourses) => {
-              const newCourses = prevCourses.filter(
-                (course) => course.id !== parseInt(id)
-              );
-              console.log("Updated courses after deletion:", newCourses);
-              return newCourses;
-            });
-            return { success: true };
-          } else {
-            const errorData = await response.json();
-            throw new Error(
-              errorData.message || "An error occurred while deleting the course"
-            );
+      if (!authUser)
+        return { success: false, errors: ["User not authenticated"] };
+      return await callApi(async () => {
+        const response = await fetch(
+          `http://localhost:5000/api/courses/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Basic ${btoa(
+                `${authUser.emailAddress}:${authUser.password}`
+              )}`,
+            },
           }
-        },
-        (error) => {
-          console.error(`Error deleting course ${id}:`, error);
-          return {
-            success: false,
-            error:
-              error.message || "An error occurred while deleting the course",
-          };
+        );
+        if (response.status === 204) {
+          setCourses((prevCourses) =>
+            prevCourses.filter((course) => course.id !== parseInt(id))
+          );
+          // return newCourses;
+          return { success: true };
+        } // Handle 500 Internal Server Error
+        if (response.status === 500) {
+          throw { success: false, errors: ["500 Internal Server Error"] };
         }
-      );
+        // Handle 404 Not Found
+        if (response.status === 404) {
+          return { success: false, errors: ["Course not found"] };
+        }
+
+        // Handle other errors
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw (
+            errorData.errors || ["An error occurred while deleting the course"]
+          );
+        }
+      }, handleApiError);
     },
     [authUser, callApi]
   );
+
   const addCourse = useCallback(
     async (newCourse) => {
+      console.log("addCourse called with:", newCourse);
       if (!authUser) {
         return { success: false, errors: ["User not authenticated"] };
       }
-      try {
-        const result = await callApi(
-          async () => {
-            let encodedCreds = btoa(
+      return await callApi(async () => {
+        const response = await fetch(`http://localhost:5000/api/courses`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${btoa(
               `${authUser.emailAddress}:${authUser.password}`
-            );
-            const response = await fetch(`http://localhost:5000/api/courses`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Basic ${encodedCreds}`,
-              },
-              body: JSON.stringify(newCourse),
-            });
-            const data = await response.json();
-            if (response.status === 201) {
-              setCourses((prevCourses) => [...prevCourses, data]);
-              return { success: true, courseId: data.id };
-            } else if (response.status === 400) {
-              return {
-                success: false,
-                errors: data.errors || ["Validation failed"],
-              };
-            } else {
-              throw new Error(data.message || "An unknown error occurred");
-            }
+            )}`,
           },
-          (errors) => {
-            return {
-              success: false,
-              errors: errors,
-            };
-          }
-        );
-
-        if (result.success) {
-          await fetchCourses(true);
+          body: JSON.stringify(newCourse),
+        });
+        const data = await response.json();
+        console.log("API response:", response.status, data);
+        if (response.ok) {
+          setCourses((prevCourses) => [...prevCourses, data]);
+          return { success: true, courseId: data.id };
+        } else {
+          throw {
+            success: false,
+            errors: data.errors || ["An unknown error occurred"],
+          };
         }
-
-        return result;
-      } catch (error) {
-        console.error("Error in addCourse:", error);
-        return {
-          success: false,
-          errors: Array.isArray(error)
-            ? error
-            : [error.message || "An unknown error occurred"],
-        };
-      }
+      }, handleApiError);
     },
-    [authUser, callApi, fetchCourses]
+    [authUser, callApi]
   );
 
   const updateCourse = useCallback(
     async (id, courseData) => {
       if (!authUser)
         return { success: false, errors: ["User not authenticated"] };
-      return await callApi(
-        async () => {
-          const response = await fetch(
-            `http://localhost:5000/api/courses/${id}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Basic ${btoa(
-                  `${authUser.emailAddress}:${authUser.password}`
-                )} `,
-              },
-              body: JSON.stringify(courseData),
-            }
-          );
-          if (response.status === 204) {
-            setCourses((prevCourses) =>
-              prevCourses.map((course) =>
-                course.id === id ? { ...course, ...courseData } : course
-              )
-            );
-            return { success: true };
-          } else if (response.status === 400) {
-            const data = await response.json();
-            return { success: false, errors: data.errors };
-          } else if (response.status === 403) {
-            return {
-              success: false,
-              errors: [
-                "Access denied. You don't have permission to update this course.",
-              ],
-            };
-          } else {
-            const data = await response.json();
-            return {
-              success: false,
-              errors: [data.message || "An unknown error occurred"],
-            };
+      return await callApi(async () => {
+        const response = await fetch(
+          `http://localhost:5000/api/courses/${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Basic ${btoa(
+                `${authUser.emailAddress}:${authUser.password}`
+              )} `,
+            },
+            body: JSON.stringify(courseData),
           }
-        },
-        (errors) => {
-          return {
+        );
+        if (response.status === 204) {
+          setCourses((prevCourses) =>
+            prevCourses.map((course) =>
+              course.id === id ? { ...course, ...courseData } : course
+            )
+          );
+          return { success: true };
+        } else {
+          const errorData = await response.json();
+          throw {
             success: false,
-            errors: errors,
+            errors: errorData.errors || ["An unknown error occcurred"],
           };
         }
-      );
+      }, handleApiError);
     },
-    [authUser, callApi, setCourses]
+    [authUser, callApi]
   );
 
   const contextValue = useMemo(

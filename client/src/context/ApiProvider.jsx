@@ -8,27 +8,26 @@ export const ApiProvider = ({ children }) => {
     async (apiFunction, errorHandler, ...args) => {
       try {
         const result = await apiFunction(...args);
-        // Check if result is undefined
-        if (result === undefined) {
-          throw new Error("API function did not return a result");
-        }
-        // Only check for success if result is not undefined
-        if (result && !result.success) {
-          throw result.errors || result.error || "An unknown error occurred";
-        }
+        // if (!result.success) {
+        //   throw result;
+        // }
         return result;
       } catch (error) {
-        console.error("API call failed:", error);
-        // Check if the error is a server-side 500 error
-        if (error.message.includes("500")) {
-          navigate("/error"); // Redirect to UnhandledError component
+        if (error.errors && error.errors.some((e) => e.includes("500"))) {
+          navigate("/error");
+          return { success: false, errors: ["Internal Server Error"] };
         }
-        return errorHandler ? errorHandler(error) : { success: false, error };
+        const formattedError = error.errors
+          ? error
+          : {
+              success: false,
+              errors: [error.message || "An unknown error occurred"],
+            };
+        return errorHandler ? errorHandler(formattedError) : formattedError;
       }
     },
     [navigate]
   );
-
   const apiValue = useMemo(() => ({ callApi }), [callApi]);
 
   return <ApiContext.Provider value={apiValue}>{children}</ApiContext.Provider>;

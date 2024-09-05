@@ -7,20 +7,21 @@ const auth = require('basic-auth');
 
 // create a user authentication middle ware
 const authenticateUser = async (req, res, next) => {
-  let message = null;
+  // let message = null;
   // extract the user credentials from the authorization header
   const credentials = auth(req);
 
   // early return for missing credentials
   // if credentials aren't found, return a 401 with an access denied message
   if (!credentials) {
-    console.log("No credentials extracted from authorization header");
-    message = 'Authorization header not fonud';
-    console.warn(message);
-    return res.status(401).json({ message: 'Access Denied' });
+    // console.log("No credentials extracted from authorization header");
+    // message = 'Authorization header not fonud';
+    // console.warn(message);
+    return res.status(401).json({ errors: ['Access Denied. Email and Password are required'] });
   }
-  console.log("Credentials provided for:", credentials.name);
-
+  if (!credentials.name || !credentials.pass) {
+    return res.status(401).json({ errors: ['Email and password are required'] });
+  }
   // find the user in the database by the provided email
   const user = await User.findOne({
     where: { emailAddress: credentials.name }
@@ -29,11 +30,7 @@ const authenticateUser = async (req, res, next) => {
   // early return for user not found
   // if the user is not found send a 401 with an access denied message
   if (!user) {
-    console.log("User not found:", credentials.name);
-
-    message = 'User not found for username: ' + credentials.name;
-    console.warn(message);
-    return res.status(401).json({ message: 'Access Denied' });
+    return res.status(401).json({ errors: ['User not found. Please check your credentials.'] });
   }
 
   // test if the found users hashed password is the same as the provided password
@@ -41,11 +38,7 @@ const authenticateUser = async (req, res, next) => {
   // early return for failed authentication
   // return 401 message if the authentication failed
   if (!authenticated) {
-    console.log("Authentication failed for:", credentials.name);
-
-    message = 'Authentication failure for username: ' + credentials.name;
-    console.warn(message);
-    return res.status(401).json({ message: 'Access Denied' });
+    return res.status(401).json({ errors: ['Incorrect password'] });
   }
   // if all checks pass set the user on the request object and go to next middle ware route
   req.currentUser = user;

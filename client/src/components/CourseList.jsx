@@ -1,10 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Course from "./Course";
 import NewCourse from "./CourseNew";
 import { useApi, useCourse } from "../context/useContext";
-
-import TestButtons from "./TestButtons";
 
 export default function CourseList() {
   const { callApi } = useApi();
@@ -12,7 +10,7 @@ export default function CourseList() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
 
   const loadCourses = useCallback(async () => {
     setIsLoading(true);
@@ -21,37 +19,27 @@ export default function CourseList() {
       console.log("Calling fetchCourses");
       const result = await callApi(actions.fetchCourses);
       console.log("fetchCourses result:", result);
-      if (!result || !result.success) {
-        throw new Error(result?.error || "Failed to fetch courses");
+      if (!result.success) {
+        throw new Error(result.errors?.[0] || "Failed to fetch courses");
       }
     } catch (err) {
       console.error("Error fetching courses:", err);
       setError(err.message);
-      if (err.message === "Internal Server Error") {
+      if (
+        err.message.includes("500") ||
+        err.message === "Internal Server Error"
+      ) {
         navigate("/error");
+        return; // Stop execution here to prevent setting isLoading to false
       }
-    } finally {
-      setIsLoading(false);
     }
-    // try {
-    //   console.log("Calling fetchCourses");
-    //   await callApi(actions.fetchCourses, (error) => {
-    //     console.error("Error fetching courses:", error);
-    //     if (error.message === "Internal Server Error") {
-    //       navigate("/error");
-    //     }
-    //   });
-    // } catch (error) {
-    //   console.error("error fetching courses", error);
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    setIsLoading(false);
   }, [callApi, actions.fetchCourses, navigate]);
 
   useEffect(() => {
     console.log("CourseList useEffect triggered");
     loadCourses();
-  }, [loadCourses, location.key]);
+  }, [loadCourses]);
 
   useEffect(() => {
     console.log("Courses updated in CourseList:", courses);
@@ -65,7 +53,6 @@ export default function CourseList() {
   }
   return (
     <>
-      <TestButtons />
       <div className="wrap main--grid">
         {courses && courses.length > 0 ? (
           courses.map((course) => (

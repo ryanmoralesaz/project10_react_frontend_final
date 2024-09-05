@@ -20,13 +20,17 @@ export default function CourseDetail() {
     const result = await callApi(
       () => actions.fetchCourse(id),
       (error) => {
-        setError(error.message || "An unexpected error occurred");
+        if (error.errors && error.errors[0].includes("500")) {
+          navigate("/error");
+        } else {
+          setError(error.errors?.[0] || "An unexpected error occurred");
+        }
       }
     );
     if (result && result.success) {
       setCourse(result.course);
     }
-  }, [id, actions, callApi]);
+  }, [id, actions, callApi, navigate]);
 
   useEffect(() => {
     loadCourse();
@@ -47,7 +51,11 @@ export default function CourseDetail() {
       () => actions.deleteCourse(id),
       (error) => {
         console.error(`Error in handleDelete for course ${id}:`, error);
-        setError(error.message || "Failed to delete course");
+        if (error.errors && error.errors.some((e) => e.includes("500"))) {
+          navigate("/error");
+        } else {
+          setError(error.message || "Failed to delete course");
+        }
       }
     );
     if (result && result.success) {
