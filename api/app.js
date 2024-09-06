@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const { sequelize } = require('./models');
+const errorHandler = require('./routes/utils/errorHandler');
 const usersRouter = require('./routes/users'); // Import the users router
 const coursesRouter = require('./routes/courses'); // Import the courses router
 // variable to enable global error logging
@@ -68,7 +69,7 @@ app.use((req, res) => {
     errors: ['Route Not Found']
   });
 });
-
+app.use(errorHandler);
 // setup a global error handler
 app.use((err, req, res, next) => {
   console.error(`Global error handler: ${err.stack}`);
@@ -83,7 +84,6 @@ app.use((err, req, res, next) => {
     errors: errors
   });
 });
-
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

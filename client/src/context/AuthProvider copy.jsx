@@ -29,25 +29,42 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const performAuthRequest = useCallback(
-    async (url, method, userData) => {
+  const signIn = useCallback(
+    async ({ emailAddress, password }) => {
+      if (!emailAddress || !password) {
+        return {
+          success: false,
+          errors: ["Email and password are required"],
+        };
+      }
+      const encodedCreds = btoa(`${emailAddress}:${password}`);
       try {
-        const encodedCredentials = btoa(
-          `${userData.emailAddress}:${userData.password}`
-        );
-        const response = await fetch(url, {
-          method,
+        const response = await fetch(`http://localhost:5000/api/users/signin`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Basic ${encodedCredentials}`,
+            Authorization: `Basic ${encodedCreds}`,
           },
-          body: JSON.stringify(userData),
+          // body: JSON.stringify(credentials),
         });
-
+        // const errorData = await response.json();
         const data = await response.json();
 
+        // if (!response.ok) {
+        //   if (response.status === 500) {
+        //     throw {
+        //       errors: errorData.errors || ["500 Internal Server Error"],
+        //       status: 500,
+        //     };
+        //   }
+        //   return {
+        //     success: false,
+        //     errors: errorData.errors || ["Failed to authenticate"],
+        //     status: response.status,
+        //   };
+        // }
         if (response.ok) {
-          updateAuthUser({ ...data, password: userData.password });
+          updateAuthUser({ ...data, password });
           return { success: true, data };
         } else {
           return {
@@ -57,7 +74,6 @@ export const AuthProvider = ({ children }) => {
           };
         }
       } catch (error) {
-        console.error("Error during auth request:", error);
         return {
           success: false,
           errors: ["An unexpected error occurred"],
@@ -68,32 +84,36 @@ export const AuthProvider = ({ children }) => {
     [updateAuthUser]
   );
 
-  const signIn = useCallback(
-    async ({ emailAddress, password }) => {
-      if (!emailAddress || !password) {
-        return {
-          success: false,
-          errors: ["Email and password are required"],
-        };
-      }
-      return performAuthRequest(
-        "http://localhost:5000/api/users/signin",
-        "POST",
-        { emailAddress, password }
-      );
-    },
-    [performAuthRequest]
-  );
-
   const signUp = useCallback(
     async (userData) => {
-      return performAuthRequest(
-        "http://localhost:5000/api/users",
-        "POST",
-        userData
-      );
+      try {
+        const response = await fetch(`http://localhost:5000/api/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userData),
+        });
+
+        if (response.ok) {
+          return signIn({
+            emailAddress: userData.emailAddress,
+            password: userData.password,
+          });
+        } else {
+          const errorData = await response.json();
+          return {
+            success: false,
+            errors: errorData.errors || ["An error occurred during sign up."],
+          };
+        }
+      } catch (error) {
+        console.error("Error signing up:", error);
+        return {
+          success: false,
+          errors: error.errors || ["An unexpected error occurred"],
+        };
+      }
     },
-    [performAuthRequest]
+    [signIn]
   );
 
   const signOut = useCallback(() => {

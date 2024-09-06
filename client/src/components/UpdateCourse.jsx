@@ -21,30 +21,15 @@ export default function UpdateCourse() {
 
   const loadCourse = useCallback(async () => {
     setIsLoading(true);
-    const result = await callApi(
-      () => actions.fetchCourse(id),
-      (errorResult) => {
-        console.log("Error loading course:", errorResult);
-        if (
-          errorResult.errors &&
-          errorResult.errors.some((error) => error.includes("500"))
-        ) {
-          navigate("/error");
-          return errorResult;
-        }
-        setErrors(errorResult.errors || ["Failed to load course"]);
-        return errorResult;
-      }
-    );
+    const result = await callApi(() => actions.fetchCourse(id));
     if (result && result.success) {
       setCourse(result.course);
-      console.log("Loaded course:", result.course);
-      console.log("Auth user:", authUser);
       if (authUser && authUser.id !== result.course.User.id) {
-        console.log("User does not own this course. Redirecting to forbidden.");
-
         navigate("/forbidden");
+        return;
       }
+    } else if (result.errors) {
+      setErrors(result.errors);
     }
     setIsLoading(false);
   }, [authUser, id, actions, navigate, callApi]);
@@ -61,32 +46,37 @@ export default function UpdateCourse() {
     }));
   };
 
+  const validateForm = () => {
+    const validationErrors = [];
+    if (!course.title.trim()) {
+      validationErrors.push("Title is required");
+    }
+    if (!course.description.trim()) {
+      validationErrors.push("Description is required");
+    }
+    if (course.materialsNeeded && course.materialsNeeded.length > 1000) {
+      validationErrors.push(
+        "Materials needed must be less than 1000 characters"
+      );
+    }
+    return validationErrors;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setErrors([]);
-    const result = await callApi(
-      () => actions.updateCourse(id, course),
-      (errorResult) => {
-        if (
-          errorResult.errors &&
-          errorResult.errors.some((error) => error.includes("500"))
-        ) {
-          navigate("/error");
-          return errorResult;
-        }
-        const errorMessages = errorResult.errors || [
-          "An unknown error occurred",
-        ];
-        setErrors(errorMessages);
-        return errorResult;
-      }
-    );
-    if (!result.success && result.errors) {
-      setErrors(result.errors);
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+
+    setErrors([]);
+    const result = await callApi(() => actions.updateCourse(id, course));
     if (result.success) {
       await actions.fetchCourses(true);
       navigate(`/courses/${id}`);
+    } else if (result.errors) {
+      setErrors(result.errors);
     }
   };
   if (isLoading) return <p>Loading...</p>;
@@ -97,7 +87,7 @@ export default function UpdateCourse() {
   return (
     <>
       <h2>Update Course</h2>
-      <ValidationErrors errors={errors} />
+      {errors.length > 0 && <ValidationErrors errors={errors} />}
       <div className="form--centered course--modify">
         <form onSubmit={handleSubmit}>
           <div className="main--flex">

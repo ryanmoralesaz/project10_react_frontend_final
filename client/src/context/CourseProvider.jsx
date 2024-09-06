@@ -17,12 +17,12 @@ export const CourseProvider = ({ children }) => {
     console.error("API Error:", error);
     return error.error || error;
   };
+
   const fetchCourses = useCallback(
     async (force = false) => {
       const now = Date.now();
       if (!force && lastFetchTime && now - lastFetchTime < CACHE_DURATION) {
-        console.log("Using cached courses data", courses);
-        return { success: true, courses }; // Return cached data with success flag
+        return { success: true, courses };
       }
       if (isFetching) return { success: false, errors: ["Already fetching"] };
       setIsFetching(true);
@@ -31,20 +31,11 @@ export const CourseProvider = ({ children }) => {
           const response = await fetch(
             `http://localhost:5000/api/courses?_=${now}`
           );
-
           if (!response.ok) {
             const errorData = await response.json();
-            return {
-              success: false,
-              errors: errorData.errors || ["Failed to fetch courses"],
-            };
+            throw errorData;
           }
-
           const data = await response.json();
-          if (!Array.isArray(data)) {
-            return { success: false, errors: ["Invalid data format"] };
-          }
-
           setCourses(data);
           setLastFetchTime(now);
           return { success: true, courses: data };
@@ -102,18 +93,14 @@ export const CourseProvider = ({ children }) => {
           setCourses((prevCourses) =>
             prevCourses.filter((course) => course.id !== parseInt(id))
           );
-          // return newCourses;
           return { success: true };
-        } // Handle 500 Internal Server Error
+        }
         if (response.status === 500) {
           throw { success: false, errors: ["500 Internal Server Error"] };
         }
-        // Handle 404 Not Found
         if (response.status === 404) {
           return { success: false, errors: ["Course not found"] };
         }
-
-        // Handle other errors
         if (!response.ok) {
           const errorData = await response.json();
           throw (
@@ -127,7 +114,6 @@ export const CourseProvider = ({ children }) => {
 
   const addCourse = useCallback(
     async (newCourse) => {
-      console.log("addCourse called with:", newCourse);
       if (!authUser) {
         return { success: false, errors: ["User not authenticated"] };
       }
@@ -143,7 +129,6 @@ export const CourseProvider = ({ children }) => {
           body: JSON.stringify(newCourse),
         });
         const data = await response.json();
-        console.log("API response:", response.status, data);
         if (response.ok) {
           setCourses((prevCourses) => [...prevCourses, data]);
           return { success: true, courseId: data.id };

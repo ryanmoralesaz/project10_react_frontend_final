@@ -18,53 +18,40 @@ export default function CourseDetail() {
 
   const loadCourse = useCallback(async () => {
     const result = await callApi(
-      () => actions.fetchCourse(id),
-      (error) => {
-        if (error.errors && error.errors[0].includes("500")) {
-          navigate("/error");
-        } else {
-          setError(error.errors?.[0] || "An unexpected error occurred");
-        }
-      }
+      () => actions.fetchCourse(id)
+      // (error) => {
+      //   if (error.errors && error.errors[0].includes("500")) {
+      //     navigate("/error");
+      //   } else {
+      //     setError(error.errors?.[0] || "An unexpected error occurred");
+      //   }
+      // }
     );
     if (result && result.success) {
       setCourse(result.course);
+    } else {
+      setError(result.errors?.[0] || "An unexpected error occurred");
     }
-  }, [id, actions, callApi, navigate]);
+  }, [id, actions, callApi]);
 
   useEffect(() => {
     loadCourse();
   }, [loadCourse]);
 
-  useEffect(() => {
-    if (error === "Course not found") {
-      navigate("/notfound");
-    } else if (error === "Access denied") {
-      navigate("/forbidden");
-    }
-  }, [error, navigate]);
-
   const handleDelete = async () => {
-    console.log(`Initiating delete for course ${id}`);
     setIsDeleting(true);
-    const result = await callApi(
-      () => actions.deleteCourse(id),
-      (error) => {
-        console.error(`Error in handleDelete for course ${id}:`, error);
-        if (error.errors && error.errors.some((e) => e.includes("500"))) {
-          navigate("/error");
-        } else {
-          setError(error.message || "Failed to delete course");
-        }
-      }
-    );
+
+    const result = await callApi(() => actions.deleteCourse(id));
+
     if (result && result.success) {
-      console.log(`Course ${id} deleted successfully, navigating to home`);
-      await actions.fetchCourses(true);
+      // Redirect to the homepage after deleting the course
       navigate("/", { replace: true });
-    } else {
-      console.log(`Failed to delete course ${id}`);
+      await actions.fetchCourses(true);
+    } else if (result.errors) {
+      // If deletion fails, set the error message
+      setError(result.errors?.[0] || "Failed to delete course");
     }
+
     setIsDeleting(false);
   };
 

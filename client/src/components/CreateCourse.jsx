@@ -24,47 +24,45 @@ export default function CreateCourse() {
       [name]: value,
     }));
   };
-
+  const validateForm = () => {
+    const validationErrors = [];
+    if (!course.title.trim()) {
+      validationErrors.push("Title is required");
+    }
+    if (!course.description.trim()) {
+      validationErrors.push("Description is required");
+    }
+    if (course.materialsNeeded && course.materialsNeeded.length > 1000) {
+      validationErrors.push(
+        "Materials needed must be less than 1000 characters"
+      );
+    }
+    return validationErrors;
+  };
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
-    const courseData = { ...course, userId: authUser.id };
-    console.log("handleSubmit: Submitting course data:", courseData);
-
-    const result = await callApi(
-      () => actions.addCourse(courseData),
-      (errorResult) => {
-        console.log(
-          "handleSubmit: Error received in CreateCourse:",
-          errorResult
-        );
-        if (
-          errorResult.errors &&
-          errorResult.errors.some((error) => error.includes("500"))
-        ) {
-          navigate("/error");
-          return errorResult;
-        }
-        const errorMessages = errorResult.errors || [
-          errorResult.message || "An unknown error occurred",
-        ];
-        setErrors(errorMessages);
-        return errorResult;
-      }
-    );
-    if (!result.success && result.errors) {
-      setErrors(result.errors);
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
     }
+    const courseData = { ...course, userId: authUser.id };
+    const result = await callApi(
+      () => actions.addCourse(courseData)
+    );
+
     if (result.success) {
       await actions.fetchCourses(true);
       navigate(result.courseId ? `/courses/${result.courseId}` : "/");
+    } else if (result.errors) {
+      setErrors(result.errors);
     }
   };
-
   return (
     <>
       <h2>Create Course</h2>
-      <ValidationErrors errors={errors} />
+      {errors.length > 0 && <ValidationErrors errors={errors} />}
       <div className="form--centered course--modify">
         <form onSubmit={handleSubmit}>
           <div className="main--flex">
@@ -76,6 +74,7 @@ export default function CreateCourse() {
                 type="text"
                 value={course.title}
                 onChange={handleChange}
+                // required
               />
 
               <label htmlFor="courseDescription">Course Description</label>
@@ -84,6 +83,7 @@ export default function CreateCourse() {
                 name="description"
                 value={course.description}
                 onChange={handleChange}
+                // required
               ></textarea>
             </div>
             <div>

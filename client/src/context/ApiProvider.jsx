@@ -8,21 +8,63 @@ export const ApiProvider = ({ children }) => {
     async (apiFunction, errorHandler, ...args) => {
       try {
         const result = await apiFunction(...args);
-        // if (!result.success) {
-        //   throw result;
-        // }
-        return result;
-      } catch (error) {
-        if (error.errors && error.errors.some((e) => e.includes("500"))) {
+        if (!result.success && result.status === 500) {
           navigate("/error");
           return { success: false, errors: ["Internal Server Error"] };
         }
-        const formattedError = error.errors
-          ? error
-          : {
-              success: false,
-              errors: [error.message || "An unknown error occurred"],
-            };
+        // Handle 404 errors (Not Found)
+        if (
+          !result.success &&
+          result.errors &&
+          result.errors.includes("Course not found")
+        ) {
+          navigate("/notfound");
+          return { success: false, errors: ["Course not found"] };
+        }
+
+        // Handle 403 errors (Forbidden)
+        if (!result.success && result.status === 403) {
+          navigate("/forbidden");
+          return { success: false, errors: ["Access Denied"] };
+        }
+        return result;
+      } catch (error) {
+        // Handle unexpected errors
+        const formattedError = {
+          success: false,
+          errors: error.errors || [
+            error.message || "An unknown error occurred",
+          ],
+        };
+
+        // Handle 500 error or any error containing "Internal Server Error"
+        if (
+          error.status === 500 ||
+          (error.errors &&
+            error.errors.some((e) => e.includes("Internal Server Error")))
+        ) {
+          navigate("/error");
+          return { success: false, errors: ["Internal Server Error"] };
+        }
+
+        // Handle 404 errors
+        if (
+          error.status === 404 ||
+          (error.errors && error.errors.includes("Course not found"))
+        ) {
+          navigate("/notfound");
+          return { success: false, errors: ["Course not found"] };
+        }
+
+        // Handle 403 errors
+        if (
+          error.status === 403 ||
+          (error.errors && error.errors.includes("Access denied"))
+        ) {
+          navigate("/forbidden");
+          return { success: false, errors: ["Access Denied"] };
+        }
+
         return errorHandler ? errorHandler(formattedError) : formattedError;
       }
     },
