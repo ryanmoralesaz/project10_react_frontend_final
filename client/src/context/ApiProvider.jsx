@@ -8,10 +8,11 @@ export const ApiProvider = ({ children }) => {
     async (apiFunction, errorHandler, ...args) => {
       try {
         const result = await apiFunction(...args);
-        if (!result.success && result.status === 500) {
+        if (result.status === 500) {
           navigate("/error");
           return { success: false, errors: ["Internal Server Error"] };
         }
+        return result;
         // Handle 404 errors (Not Found)
         if (
           !result.success &&

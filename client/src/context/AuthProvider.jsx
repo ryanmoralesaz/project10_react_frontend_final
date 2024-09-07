@@ -29,44 +29,49 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const performAuthRequest = useCallback(
+const performAuthRequest = useCallback(
     async (url, method, userData) => {
       try {
-        const encodedCredentials = btoa(
-          `${userData.emailAddress}:${userData.password}`
-        );
-        const response = await fetch(url, {
+        const options = {
           method,
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Basic ${encodedCredentials}`,
           },
-          body: JSON.stringify(userData),
-        });
-        let data;
+        };
+
+        if (method !== "GET") {
+          options.body = JSON.stringify(userData);
+        }
+
+        if (userData.emailAddress && userData.password) {
+          const encodedCredentials = btoa(
+            `${userData.emailAddress}:${userData.password}`
+          );
+          options.headers.Authorization = `Basic ${encodedCredentials}`;
+        }
+
+        const response = await fetch(url, options);
+        
+        if (response.status === 204 || response.status === 201) {
+          return { success: true };
+        }
+
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
+          const data = await response.json();
+          if (response.ok) {
+            return { success: true, data };
+          } else {
+            return {
+              success: false,
+              errors: data.errors || ["Failed to authenticate"],
+              status: response.status,
+            };
+          }
         } else {
           const text = await response.text();
           console.error("Non-JSON response:", text);
           return { success: false, errors: ["Unexpected server response"] };
-        }
-        if (response.ok) {
-          if (method === "POST" && url.includes("/users")) {
-            // For sign-up, don't update auth user yet
-            return { success: true, data };
-          } else {
-            // For sign-in, update auth user
-            updateAuthUser({ ...data, password: userData.password });
-            return { success: true, data };
-          }
-        } else {
-          return {
-            success: false,
-            errors: data.errors || ["Failed to authenticate"],
-            status: response.status,
-          };
         }
       } catch (error) {
         console.error("Error during auth request:", error);
@@ -77,10 +82,10 @@ export const AuthProvider = ({ children }) => {
         };
       }
     },
-    [updateAuthUser]
+    []
   );
 
-  const signIn = useCallback(
+const signIn = useCallback(
     async ({ emailAddress, password }) => {
       if (!emailAddress || !password) {
         return {
@@ -88,13 +93,17 @@ export const AuthProvider = ({ children }) => {
           errors: ["Email and password are required"],
         };
       }
-      return performAuthRequest(
-        "http://localhost:5000/api/users/signin",
-        "POST",
+      const result = await performAuthRequest(
+        "http://localhost:5000/api/users",
+        "GET",
         { emailAddress, password }
       );
+      if (result.success) {
+        updateAuthUser({ ...result.data, password });
+      }
+      return result;
     },
-    [performAuthRequest]
+    [performAuthRequest, updateAuthUser]
   );
 
   const signUp = useCallback(

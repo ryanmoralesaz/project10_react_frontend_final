@@ -93,14 +93,15 @@ router.post('/courses', authenticateUser, async (req, res) => {
     // assign it to a new course variable and interpolate it in the response location header
     const newCourse = await Course.create(course);
     // return a resource created status and a location header of the new resource
-    res.status(201).location(`/api/courses/${newCourse.id}`).end();
+    // res.status(201).location(`/api/courses/${newCourse.id}`).end();
+    res.status(201).json(newCourse);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       const errors = error.errors.map((err) => err.message);
       // send a 400 bad request error to the client with the destructured error message
       res
         .status(400)
-        .json({ errors });
+        .json({ error: errors });
     } else {
       console.error('Error creating the course:', error);
       res

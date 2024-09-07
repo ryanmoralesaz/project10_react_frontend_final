@@ -112,37 +112,79 @@ export const CourseProvider = ({ children }) => {
     [authUser, callApi]
   );
 
+  // const addCourse = useCallback(
+  //   async (newCourse) => {
+  //     if (!authUser) {
+  //       return { success: false, errors: ["User not authenticated"] };
+  //     }
+  //     return await callApi(async () => {
+  //       const response = await fetch(`http://localhost:5000/api/courses`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Basic ${btoa(
+  //             `${authUser.emailAddress}:${authUser.password}`
+  //           )}`,
+  //         },
+  //         body: JSON.stringify(newCourse),
+  //       });
+  //       const data = await response.json();
+  //       if (response.ok) {
+  //         setCourses((prevCourses) => [...prevCourses, data]);
+  //         return { success: true, courseId: data.id };
+  //       } else {
+  //         throw {
+  //           success: false,
+  //           errors: data.errors || ["An unknown error occurred"],
+  //         };
+  //       }
+  //     }, handleApiError);
+  //   },
+  //   [authUser, callApi]
+  // );
   const addCourse = useCallback(
     async (newCourse) => {
       if (!authUser) {
         return { success: false, errors: ["User not authenticated"] };
       }
-      return await callApi(async () => {
-        const response = await fetch(`http://localhost:5000/api/courses`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Basic ${btoa(
-              `${authUser.emailAddress}:${authUser.password}`
-            )}`,
-          },
-          body: JSON.stringify(newCourse),
-        });
-        const data = await response.json();
-        if (response.ok) {
+      return await callApi(
+        async () => {
+          const response = await fetch(`http://localhost:5000/api/courses`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Basic ${btoa(
+                `${authUser.emailAddress}:${authUser.password}`
+              )}`,
+            },
+            body: JSON.stringify(newCourse),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw {
+              success: false,
+              errors: errorData.errors || ["An unknown error occurred"],
+              status: response.status,
+            };
+          }
+
+          const data = await response.json();
           setCourses((prevCourses) => [...prevCourses, data]);
           return { success: true, courseId: data.id };
-        } else {
-          throw {
-            success: false,
-            errors: data.errors || ["An unknown error occurred"],
-          };
-        }
-      }, handleApiError);
+        },
+        handleApiError
+        // (error) => {
+        //   console.error("Error adding course:", error);
+        //   return {
+        //     success: false,
+        //     errors: error.errors || ["An unknown error occurred"],
+        //   };
+        // }
+      );
     },
     [authUser, callApi]
   );
-
   const updateCourse = useCallback(
     async (id, courseData) => {
       if (!authUser)
