@@ -23,9 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         // validation message for empty field
         validate: {
-          notNull: {
-            msg: 'Title cannot be null'
-          },
           notEmpty: {
             msg: 'Title is a required field'
           }
@@ -39,37 +36,17 @@ module.exports = (sequelize, DataTypes) => {
         validate: {
           notEmpty: {
             msg: 'Description is a required field'
-          },
-          notNull: {
-            msg: 'Description cannot be null'
           }
         }
       },
-      estimatedTime: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+      estimatedTime: { type: DataTypes.STRING, allowNull: true },
       materialsNeeded: {
         type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-          len: {
-            args: [0, 1000],
-            msg: 'Materials needed must be less than 1000 characters'
-          }
-        }
+        allowNull: true
       },
       userId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-          notNull: {
-            msg: 'User ID is required'
-          },
-          isInt: {
-            msg: 'User ID must be an integer'
-          }
-        }
+        allowNull: false
       }
     },
     {
