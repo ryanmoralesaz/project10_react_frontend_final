@@ -43,12 +43,24 @@ export const AuthProvider = ({ children }) => {
           },
           body: JSON.stringify(userData),
         });
-
-        const data = await response.json();
-
+        let data;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          console.error("Non-JSON response:", text);
+          return { success: false, errors: ["Unexpected server response"] };
+        }
         if (response.ok) {
-          updateAuthUser({ ...data, password: userData.password });
-          return { success: true, data };
+          if (method === "POST" && url.includes("/users")) {
+            // For sign-up, don't update auth user yet
+            return { success: true, data };
+          } else {
+            // For sign-in, update auth user
+            updateAuthUser({ ...data, password: userData.password });
+            return { success: true, data };
+          }
         } else {
           return {
             success: false,
@@ -87,13 +99,20 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = useCallback(
     async (userData) => {
-      return performAuthRequest(
+      const result = await performAuthRequest(
         "http://localhost:5000/api/users",
         "POST",
         userData
       );
+      if (result.success) {
+        return signIn({
+          emailAddress: userData.emailAddress,
+          password: userData.password,
+        });
+      }
+      return result;
     },
-    [performAuthRequest]
+    [performAuthRequest, signIn]
   );
 
   const signOut = useCallback(() => {

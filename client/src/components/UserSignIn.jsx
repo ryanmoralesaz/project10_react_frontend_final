@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
 import { useAuth, useApi } from "../context/useContext";
@@ -19,29 +19,16 @@ export default function UserSignIn() {
     setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validateForm = useCallback(() => {
-    const newErrors = [];
-    if (!credentials.emailAddress) newErrors.push("Email is required");
-    if (!credentials.password) newErrors.push("Password is required");
-    return newErrors;
-  }, [credentials.emailAddress, credentials.password]);
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     // Perform client-side validation
-    const formErrors = validateForm();
-    setErrors(formErrors);
-
-    if (formErrors.length === 0) {
-      const result = await callApi(
-        () => signIn(credentials)
-      );
-      if (result.success) {
-        const from = location.state?.from?.pathname || "/";
-        navigate(from, { replace: true });
-      } else {
-        setErrors(result.errors || ["Failed to sign in"]);
-      }
+    setErrors([]);
+    const result = await callApi(() => signIn(credentials));
+    if (result.success) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
+    } else {
+      setErrors(result.errors || ["Failed to sign in"]);
     }
   };
 

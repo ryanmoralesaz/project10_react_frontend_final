@@ -46,30 +46,8 @@ export default function UpdateCourse() {
     }));
   };
 
-  const validateForm = () => {
-    const validationErrors = [];
-    if (!course.title.trim()) {
-      validationErrors.push("Title is required");
-    }
-    if (!course.description.trim()) {
-      validationErrors.push("Description is required");
-    }
-    if (course.materialsNeeded && course.materialsNeeded.length > 1000) {
-      validationErrors.push(
-        "Materials needed must be less than 1000 characters"
-      );
-    }
-    return validationErrors;
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     setErrors([]);
     const result = await callApi(() => actions.updateCourse(id, course));
     if (result.success) {
