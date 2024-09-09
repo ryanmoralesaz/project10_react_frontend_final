@@ -2,7 +2,7 @@ export default function UnhandledError() {
   return (
     <div className="wrap">
       <h2>Error</h2>
-      <p>Sorry! We just encounterd an unexpected error.</p>
+      <p>Sorry! We just encountered an unexpected error.</p>
     </div>
   );
 }

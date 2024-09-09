@@ -1,7 +1,11 @@
+// Import Link from React Router for navigation without page reload
 import { Link } from "react-router-dom";
+// Import the useAuth hook from the context API
 import { useAuth } from "../context/useContext";
 
+// Define the Header component
 export default function Header() {
+  // Cache the authUser object and signOut method from the useAuth hook
   const { authUser, signOut } = useAuth();
 
   return (
@@ -11,7 +15,9 @@ export default function Header() {
           <Link to="/">Courses</Link>
         </h1>
         <nav>
+          {/* Use a ternary operator to conditionally render based on authentication status */}
           {authUser ? (
+            // If user is authenticated, show welcome message and sign out button
             <ul className="header--signedin">
               <li>
                 Welcome, {authUser.firstName}
@@ -22,6 +28,7 @@ export default function Header() {
               </li>
             </ul>
           ) : (
+            // If user is not authenticated, show sign up and sign in links
             <ul className="header--signedout">
               <li>
                 <Link to="/sign-up">Sign Up</Link>

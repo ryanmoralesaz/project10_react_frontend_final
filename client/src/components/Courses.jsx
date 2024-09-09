@@ -16,7 +16,7 @@ export default function Courses() {
     setError(null);
     const result = await callApi(actions.fetchCourses);
     if (!result.success) {
-      setError(result.errors?.[0] || "Failed to fetch courses");
+      setError((result.errors && result.errors[0]) || "Failed to fetch courses.");
     }
     setIsLoading(false);
   }, [callApi, actions.fetchCourses]);

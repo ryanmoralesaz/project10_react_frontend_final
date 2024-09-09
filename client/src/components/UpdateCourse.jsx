@@ -1,14 +1,23 @@
+// Import necessary hooks from React and React Router
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+// Import custom hooks from context
 import { useCourse, useAuth, useApi } from "../context/useContext";
+// Import ValidationErrors component for displaying errors
 import ValidationErrors from "./ValidationErrors";
 
+// Define the UpdateCourse component
 export default function UpdateCourse() {
+  // Cache the course id from URL params
   const { id } = useParams();
+  // Initialize navigation function
   const navigate = useNavigate();
+  // Cache methods and data from custom hooks
   const { actions } = useCourse();
   const { authUser } = useAuth();
   const { callApi } = useApi();
+
+  // Initialize state for course data, errors, and loading status
   const [course, setCourse] = useState({
     title: "",
     description: "",
@@ -19,11 +28,13 @@ export default function UpdateCourse() {
   const [errors, setErrors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Define a memoized function to load course data
   const loadCourse = useCallback(async () => {
     setIsLoading(true);
     const result = await callApi(() => actions.fetchCourse(id));
     if (result && result.success) {
       setCourse(result.course);
+      // Redirect to forbidden page if user doesn't own the course
       if (authUser && authUser.id !== result.course.User.id) {
         navigate("/forbidden");
         return;
@@ -34,10 +45,12 @@ export default function UpdateCourse() {
     setIsLoading(false);
   }, [authUser, id, actions, navigate, callApi]);
 
+  // Load course data on component mount
   useEffect(() => {
     loadCourse();
   }, [loadCourse]);
 
+  // Handle input changes
   const handleChange = (event) => {
     const { name, value } = event.target;
     setCourse((prev) => ({
@@ -46,6 +59,7 @@ export default function UpdateCourse() {
     }));
   };
 
+  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
@@ -54,14 +68,20 @@ export default function UpdateCourse() {
       await actions.fetchCourses(true);
       navigate(`/courses/${id}`);
     } else if (result.errors) {
-      setErrors(result.errors);
+      setErrors(Array.isArray(result.errors) ? result.errors : [result.errors]);
     }
   };
+
+  // Render loading state
   if (isLoading) return <p>Loading...</p>;
+  // Render message if user is not authenticated
   if (!authUser) return <p>Please sign in to update courses.</p>;
+  // Render message if user doesn't have permission
   if (!course.User || authUser.id !== course.User.id) {
     return <p>You do not have permission to update this course.</p>;
   }
+
+  // Render the update course form
   return (
     <>
       <h2>Update Course</h2>

@@ -11,13 +11,13 @@ import "./styles/global.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <ApiProvider>
+      <ApiProvider>
+        <AuthProvider>
           <CourseProvider>
             <App />
           </CourseProvider>
-        </ApiProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ApiProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

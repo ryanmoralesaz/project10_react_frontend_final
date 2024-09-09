@@ -1,3 +1,4 @@
+// export the functional course component with the course title passed as a prop
 export default function Course({ courseTitle }) {
   return (
     <div className="course--module course--link">

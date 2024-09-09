@@ -11,6 +11,7 @@ const router = express.Router();
 // GET /api/courses get a list of all of the user's courses
 router.get('/courses', async (req, res) => {
   try {
+    // throw new Error(500)
     // use a promise to find all of the user courses but exclude some attributes
     // initialize the courses 
     const courses = await Course.findAll({
@@ -48,6 +49,7 @@ router.get('/courses', async (req, res) => {
 // We're going to return the corresponding requested course by id including the User association
 router.get(`/courses/:id`, async (req, res) => {
   try {
+    // throw new Error(500)
     // find the course be the primary key
     // include the User info excluding some fields
     const course = await Course.findByPk(req.params.id, {
@@ -85,6 +87,7 @@ router.get(`/courses/:id`, async (req, res) => {
 // create a new course if the user is authenticated
 router.post('/courses', authenticateUser, async (req, res) => {
   try {
+    // throw new Error(500);
     // initialize the body of the request to the course variable
     const course = req.body;
     // Associate the coures with the authenticated user
@@ -98,15 +101,16 @@ router.post('/courses', authenticateUser, async (req, res) => {
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       const errors = error.errors.map((err) => err.message);
+      console.log(errors);
       // send a 400 bad request error to the client with the destructured error message
       res
         .status(400)
-        .json({ error: errors });
+        .json({ errors });
     } else {
       console.error('Error creating the course:', error);
       res
         .status(500)
-        .json({ message: 'There was an error creating the course', error });
+        .json({ message: 'There was an error creating the course', errors: [error.message] });
     }
   }
 });
@@ -116,6 +120,7 @@ router.post('/courses', authenticateUser, async (req, res) => {
 // if the user is authenticated
 router.put('/courses/:id', authenticateUser, async (req, res) => {
   try {
+    // throw new Error(500)
     // initialize the requested course to the course const by its primary key that matches the params id
     const course = await Course.findByPk(req.params.id);
     // early return if the course isn't found
@@ -142,6 +147,7 @@ router.put('/courses/:id', authenticateUser, async (req, res) => {
     if (error.name === 'SequelizeValidationError') {
       // send the user the error messages with a bad request status
       const errors = error.errors.map((err) => err.message);
+      console.log(errors);
       return res.status(400).json({ errors });
     }
     // return a standard server error status and message
@@ -154,17 +160,17 @@ router.put('/courses/:id', authenticateUser, async (req, res) => {
 // We're going to delete the courses with the matching params id if the user is the authenticated owner of the course
 router.delete(`/courses/:id`, authenticateUser, async (req, res) => {
   try {
+    // throw new Error(500)
     // find the course by primary key that matching params.id
     const course = await Course.findByPk(req.params.id);
     // early return if course not found
     if (!course) {
       // return a resource not found status message
-      console.error('Error deleting the course: ', error);
+      console.error('Error deleting the course: ');
       return res
         .status(404)
         .json({
           message: 'Error deleting the course. Course not found.',
-          error
         });
     }
     // if the course owner id matches the id of the authenticated user allow the delete request
@@ -172,20 +178,15 @@ router.delete(`/courses/:id`, authenticateUser, async (req, res) => {
       // delete the course with the sequelize destroy() method
       await course.destroy();
       // return a no content response
-      res.status(204).end();
+      return res.status(204).end();
     } else {
       // return an access denied message for non owner
-      res.status(403).json({
+      return res.status(403).json({
         message: 'Access denied: User is not the owner of the course.'
       });
     }
   } catch (error) {
-    // return a bad request status with an error message
-    console.error('There was an error deleting the course', error);
-    res.status(400).json({
-      message: 'Error deleting the course',
-      error
-    });
+    return res.status(500).json({ message: "There was an error deleting the course." });
   }
 });
 

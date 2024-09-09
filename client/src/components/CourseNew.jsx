@@ -1,4 +1,7 @@
+//necessary imports, Link for clickable anchor tag wrapper triggers routes without full page reload
 import { Link } from "react-router-dom";
+
+// define the newCourse component that shows a card to link to the /courses/create route that renders the create course component
 
 export default function NewCourse() {
   return (

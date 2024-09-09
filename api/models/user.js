@@ -80,15 +80,6 @@ module.exports = (sequelize, DataTypes) => {
       confirmedPassword: {
         type: DataTypes.VIRTUAL,
         allowNull: true,
-        // set(val) {
-        //   if (val === this.password) {
-        //     const hashedPassword = bcrypt.hashSync(val, 10);
-        //     this.setDataValue('confirmedPassword', hashedPassword);
-        //   } else {
-        //     throw new Error('Passwords must match');
-        //   }
-
-        // },
         notNull: {
           msg: 'Both passwords must match'
         },

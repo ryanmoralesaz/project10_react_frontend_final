@@ -32,33 +32,43 @@ app.use(cors(
     credentials: true
   }
 ));
-// setup a friendly greeting for the root route
-
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to the REST API project!'
-  });
-});
 
 app.use('/api', usersRouter); // Use the routers for the /api path
 app.use('/api', coursesRouter); // Use the courses router
+
+
+// setup a global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler', err);
+  if (enableGlobalErrorLogging) {
+    console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
+  }
+
+  if (err.message === '500') {
+    return res.status(500).json({ message: "Error reading users" });
+  }
+  // Check if the error is a Sequelize validation error
+  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+    const errors = err.errors.map(e => e.message);
+    return res.status(400).json({ errors });
+  }
+
+  // Handle specific error types
+  if (err.status === 401) {
+    return res.status(401).json({ message: err.message || 'Access Denied' });
+  }
+
+  // Default error handler
+  res.status(err.status || 500).json({
+    message: err.message || 'An unexpected error occurred',
+    error: {}
+  });
+});
 
 // send 404 if no other route matched
 app.use((req, res) => {
   res.status(404).json({
     message: 'Route Not Found'
-  });
-});
-
-// setup a global error handler
-app.use((err, req, res) => {
-  if (enableGlobalErrorLogging) {
-    console.error(`Global error handler: ${JSON.stringify(err.stack)}`);
-  }
-
-  res.status(err.status || 500).json({
-    message: err.message,
-    error: {}
   });
 });
 

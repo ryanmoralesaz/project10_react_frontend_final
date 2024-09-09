@@ -8,26 +8,6 @@ export const ApiProvider = ({ children }) => {
     async (apiFunction, errorHandler, ...args) => {
       try {
         const result = await apiFunction(...args);
-        if (result.status === 500) {
-          navigate("/error");
-          return { success: false, errors: ["Internal Server Error"] };
-        }
-        return result;
-        // Handle 404 errors (Not Found)
-        if (
-          !result.success &&
-          result.errors &&
-          result.errors.includes("Course not found")
-        ) {
-          navigate("/notfound");
-          return { success: false, errors: ["Course not found"] };
-        }
-
-        // Handle 403 errors (Forbidden)
-        if (!result.success && result.status === 403) {
-          navigate("/forbidden");
-          return { success: false, errors: ["Access Denied"] };
-        }
         return result;
       } catch (error) {
         // Handle unexpected errors
@@ -36,31 +16,28 @@ export const ApiProvider = ({ children }) => {
           errors: error.errors || [
             error.message || "An unknown error occurred",
           ],
+          status: error.status,
         };
 
-        // Handle 500 error or any error containing "Internal Server Error"
         if (
-          error.status === 500 ||
-          (error.errors &&
-            error.errors.some((e) => e.includes("Internal Server Error")))
+          formattedError.status === 500 ||
+          formattedError.errors.some((e) => e.includes("Internal Server Error"))
         ) {
           navigate("/error");
           return { success: false, errors: ["Internal Server Error"] };
         }
 
-        // Handle 404 errors
         if (
-          error.status === 404 ||
-          (error.errors && error.errors.includes("Course not found"))
+          formattedError.status === 404 ||
+          formattedError.errors.includes("Course not found")
         ) {
           navigate("/notfound");
           return { success: false, errors: ["Course not found"] };
         }
 
-        // Handle 403 errors
         if (
-          error.status === 403 ||
-          (error.errors && error.errors.includes("Access denied"))
+          formattedError.status === 403 ||
+          formattedError.errors.includes("Access denied")
         ) {
           navigate("/forbidden");
           return { success: false, errors: ["Access Denied"] };

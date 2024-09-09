@@ -1,37 +1,51 @@
+// Import necessary hooks and components
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
 import { useAuth, useApi } from "../context/useContext";
 
+// Define the UserSignIn component
 export default function UserSignIn() {
+  // Cache methods from custom hooks
   const { signIn } = useAuth();
   const { callApi } = useApi();
+
+  // Initialize state for credentials and errors
   const [credentials, setCredentials] = useState({
     emailAddress: "",
     password: "",
   });
-  const navigate = useNavigate();
-  const location = useLocation();
   const [errors, setErrors] = useState([]);
 
+  // Initialize navigation and location
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle input changes
   const handleChange = (event) => {
     const { name, value } = event.target;
     setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // Perform client-side validation
+    
     setErrors([]);
-    const result = await callApi(() => signIn(credentials));
-    if (result.success) {
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
-    } else {
-      setErrors(result.errors || ["Failed to sign in"]);
+    try {
+      const result = await callApi(() => signIn(credentials));
+      if (result.success) {
+        const from = location.state?.from?.pathname || "/";
+        navigate(from, { replace: true });
+      } else {
+        setErrors(result.errors || ["Failed to sign in"]);
+      }
+    } catch (error) {
+      setErrors(error.errors || ["An unexpected error occurred"]);
     }
   };
 
+  // Render the sign-in form
   return (
     <div className="form--centered authorize">
       <h2>Sign In</h2>

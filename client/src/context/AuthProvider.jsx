@@ -1,10 +1,10 @@
 import { useCallback, useState, useMemo } from "react";
 import { AuthContext } from "./Context";
 import Cookies from "js-cookie";
-
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { useApi } from "./useContext";
 
 export const AuthProvider = ({ children }) => {
+  const { callApi } = useApi();
   const [authUser, setAuthUser] = useState(() => {
     const cookie = Cookies.get("authenticatedUser");
     return cookie ? JSON.parse(cookie) : null;
@@ -29,9 +29,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-const performAuthRequest = useCallback(
+  const performAuthRequest = useCallback(
     async (url, method, userData) => {
-      try {
+      return await callApi(async () => {
         const options = {
           method,
           headers: {
@@ -51,41 +51,38 @@ const performAuthRequest = useCallback(
         }
 
         const response = await fetch(url, options);
-        
+
         if (response.status === 204 || response.status === 201) {
           return { success: true };
         }
 
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await response.json();
-          if (response.ok) {
-            return { success: true, data };
-          } else {
-            return {
-              success: false,
-              errors: data.errors || ["Failed to authenticate"],
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw {
               status: response.status,
+              errors: [
+                "Invalid credentials.", "Please check email and password.",
+              ],
             };
           }
-        } else {
-          const text = await response.text();
-          console.error("Non-JSON response:", text);
-          return { success: false, errors: ["Unexpected server response"] };
+
+          const errorData = await response.json();
+          throw {
+            status: response.status,
+            errors: errorData.errors || [
+              `HTTP error! status: ${response.status}`,
+            ],
+          };
         }
-      } catch (error) {
-        console.error("Error during auth request:", error);
-        return {
-          success: false,
-          errors: ["An unexpected error occurred"],
-          status: 500,
-        };
-      }
+
+        const data = await response.json();
+        return { success: true, data };
+      });
     },
-    []
+    [callApi]
   );
 
-const signIn = useCallback(
+  const signIn = useCallback(
     async ({ emailAddress, password }) => {
       if (!emailAddress || !password) {
         return {
@@ -138,6 +135,7 @@ const signIn = useCallback(
     }),
     [authUser, signIn, signUp, signOut, updateAuthUser]
   );
+
   return (
     <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );

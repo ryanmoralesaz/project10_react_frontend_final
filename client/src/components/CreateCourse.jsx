@@ -28,15 +28,13 @@ export default function CreateCourse() {
     event.preventDefault();
     setErrors([]);
     const courseData = { ...course, userId: authUser.id };
-    const result = await callApi(
-      () => actions.addCourse(courseData)
-    );
+    const result = await callApi(() => actions.addCourse(courseData));
 
     if (result.success) {
       await actions.fetchCourses(true);
       navigate(result.courseId ? `/courses/${result.courseId}` : "/");
     } else if (result.errors) {
-      setErrors(result.errors);
+      setErrors(Array.isArray(result.errors) ? result.errors : [result.errors]);
     }
   };
   return (

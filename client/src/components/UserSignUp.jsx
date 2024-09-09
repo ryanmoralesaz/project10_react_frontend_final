@@ -1,11 +1,16 @@
-import { useState} from "react";
+// Import necessary hooks and components
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ValidationErrors from "./ValidationErrors";
 import { useAuth, useApi } from "../context/useContext";
 
+// Define the UserSignUp component
 export default function UserSignUp() {
+  // Cache methods from custom hooks
   const { signUp } = useAuth();
   const { callApi } = useApi();
+
+  // Initialize state for form data and errors
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -13,26 +18,30 @@ export default function UserSignUp() {
     password: "",
   });
   const [errors, setErrors] = useState([]);
+
+  // Initialize navigation
   const navigate = useNavigate();
 
-  // Clear validation errors as the user types in the input field
+  // Handle input changes
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors([]);
     const result = await callApi(() => signUp(formData));
     if (result.success) {
-const from = location.state?.from?.pathname || "/";
+      const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } else {
       setErrors(result.errors || ["Failed to sign up"]);
     }
   };
 
+  // Render the sign-up form
   return (
     <div className="form--centered authorize">
       {errors.length > 0 && <ValidationErrors errors={errors} />}
