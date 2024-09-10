@@ -1,3 +1,4 @@
+// export the NotFound functional component
 export default function NotFound() {
   return (
     <div className="wrap">

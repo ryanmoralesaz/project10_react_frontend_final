@@ -1,3 +1,4 @@
+// export the unhandled error
 export default function UnhandledError() {
   return (
     <div className="wrap">

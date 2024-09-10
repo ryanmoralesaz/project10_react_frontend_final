@@ -1,5 +1,8 @@
+// import the necessary packages
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+// import the context
 import { useAuth } from "../context/useContext";
+//export the private route
 const PrivateRoute = () => {
   const { authUser } = useAuth();
   const location = useLocation();
